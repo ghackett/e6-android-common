@@ -67,7 +67,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		public long getSize();
 	}
 	
-	public static class RequestFactory {
+	public static class EzRequestFactory {
 		public static EzHttpRequest createGetRequest(Context c, String url, boolean isRaw, int requestCode) {
 			EzHttpRequest req = new EzHttpRequest(c, url, REQ_GET, isRaw, requestCode);
 			return req;
@@ -124,7 +124,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	private int mRequestCode;
 	private Object mTag;
 	
-	private ArrayList<NameValuePair> mPostParams;
+	private ArrayList<NameValuePair> mParams;
 	private ArrayList<EzHttpPostUploadEntity> mPostFiles;
 	private HashMap<String, String> mHeaders;
 	
@@ -150,7 +150,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		mTag = null;
 
 		mHeaders = null;
-		mPostParams = null;
+		mParams = null;
 		mPostFiles = null;
 		
 		mFinishedListener = null;
@@ -216,8 +216,8 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	public void setHeaders(HashMap<String, String> headers) {
 		mHeaders = headers;
 	}
-	public void setPostParams(ArrayList<NameValuePair> postParams) {
-		mPostParams = postParams;
+	public void setParams(ArrayList<NameValuePair> postParams) {
+		mParams = postParams;
 	}
 	public void setPostFiles(ArrayList<EzHttpPostUploadEntity> postFiles) {
 		mPostFiles = postFiles;
@@ -226,8 +226,8 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	public HashMap<String, String> getHeaders() {
 		return mHeaders;
 	}
-	public ArrayList<NameValuePair> getPostParams() {
-		return mPostParams;
+	public ArrayList<NameValuePair> getParams() {
+		return mParams;
 	}
 	public ArrayList<EzHttpPostUploadEntity> getPostFiles() {
 		return mPostFiles;
@@ -239,11 +239,11 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		}
 		mHeaders.put(name, value);
 	}
-	public void addPostParam(String name, String value) {
-		if (mPostParams == null) {
-			mPostParams = new ArrayList<NameValuePair>();
+	public void addParam(String name, String value) {
+		if (mParams == null) {
+			mParams = new ArrayList<NameValuePair>();
 		}
-		mPostParams.add(new BasicNameValuePair(name, value));
+		mParams.add(new BasicNameValuePair(name, value));
 	}
 	public void addPostFile(EzHttpPostUploadEntity postFile) {
 		if (mPostFiles == null) {
@@ -311,32 +311,45 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		HttpConnectionParams.setSoTimeout(connParams, mTimeoutSecs*1000);
 		HttpUriRequest message = null;
 		
+		String url = mUrl;
+		
+		if (mReqType != REQ_POST && mParams != null && mParams.size() > 0) {
+			for (NameValuePair param : mParams) {
+				if (url.contains("?")) {
+					url += "&";
+				} else {
+					url += "?";
+				}
+				url += param.getName() + "=" + param.getValue();
+			}
+		}
+		
 		try {
 			switch(mReqType) {
 				case REQ_GET: {
-					message = new HttpGet(mUrl);
+					message = new HttpGet(url);
 					break;
 				}
 				case REQ_PUT: {
-					message = new HttpPost(mUrl);
+					message = new HttpPost(url);
 					break;
 				}
 				case REQ_DEL: {
-					message = new HttpDelete(mUrl);
+					message = new HttpDelete(url);
 					break;
 				}
 				case REQ_HEAD: {
-					message = new HttpHead(mUrl);
+					message = new HttpHead(url);
 					break;
 				}
 				case REQ_POST: {
-					message = new HttpPost(mUrl);
-					if (mPostParams != null)
-						((HttpPost)message).setEntity(new UrlEncodedFormEntity(mPostParams, HTTP.UTF_8));
+					message = new HttpPost(url);
+					if (mParams != null)
+						((HttpPost)message).setEntity(new UrlEncodedFormEntity(mParams, HTTP.UTF_8));
 					break;
 				}
 				case REQ_POST_STRING_ENT: {
-					message = new HttpPost(mUrl);
+					message = new HttpPost(url);
 					StringEntity ent = new StringEntity(mStringEntity, mStringEntityEncoding);
 					ent.setContentType(mStringEntityType);
 					((HttpPost)message).setEntity(ent);
@@ -435,14 +448,14 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 			DataOutputStream outputStream = new DataOutputStream(conn.getOutputStream());
 			outputStream.writeBytes(VAL_POST_SEPERATOR);
 			
-			if (mPostParams != null) {
-				for (int i = 0; i<mPostParams.size(); i++) {
-					NameValuePair param = mPostParams.get(i);
+			if (mParams != null) {
+				for (int i = 0; i<mParams.size(); i++) {
+					NameValuePair param = mParams.get(i);
 					outputStream.writeBytes(String.format(VAL_PARAM_CONTENT_DISPOSITION_FORMATER, param.getName()));
 					outputStream.writeBytes(param.getValue());
 					outputStream.writeBytes(VAL_LINE_END);
 					
-					if (hasFiles || i < mPostParams.size()-1) {
+					if (hasFiles || i < mParams.size()-1) {
 						outputStream.writeBytes(VAL_POST_SEPERATOR);
 					}
 				}

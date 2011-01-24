@@ -53,3 +53,4 @@ bin/com/episode6/android/common/http/upload/EzHttpUriPostUploadEntity.class
 bin/com/episode6/android/common/http/EzHttpThreadExecutor$EasyHttpExecutorRunnable$1.class
 bin/com/episode6/android/common/http/EzHttpThreadExecutor$EasyHttpExecutorRunnable.class
 bin/com/episode6/android/common/http/EzHttpThreadExecutor.class
+bin/com/episode6/android/common/http/EzHttpRequest$EzRequestFactory.class

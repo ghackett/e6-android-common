@@ -27,4 +27,16 @@ public class EzHttpUriPostUploadEntity extends AbstractEzHttpPostUploadEntity {
 		}
 	}
 
+	public long getSize() {
+		try {
+			InputStream in = getInputStream();
+			long avail = in.available();
+			in.close();
+			return avail;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return 0;
+		}
+	}
+
 }

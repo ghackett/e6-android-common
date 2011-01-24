@@ -26,4 +26,8 @@ public class EzHttpFilePostUploadEntity extends AbstractEzHttpPostUploadEntity {
 		}
 	}
 
+	public long getSize() {
+		return mFile.length();
+	}
+
 }

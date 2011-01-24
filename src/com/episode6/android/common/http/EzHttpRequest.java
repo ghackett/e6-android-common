@@ -53,6 +53,8 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	public interface EzHttpRequestListener {
 		public void onHttpRequestSucceeded(EzHttpResponse response);
 		public void onHttpRequestFailed(EzHttpResponse response);
+		public void onHttpRequestSucceededInBackground(EzHttpResponse response);
+		public void onHttpRequestFailedInBackground(EzHttpResponse response);
 	}
 	
 	public interface EzHttpRequestProgressListener {
@@ -288,6 +290,12 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		mProgressListener = listener;
 	}
 	
+	public void executeAsync(EzHttpRequestListener listener, boolean highPriority) {
+		if (highPriority)
+			executeAsyncOnStack(listener);
+		else
+			executeAsyncOnQueue(listener);
+	}
 	
 	public void executeAsyncOnStack(EzHttpRequestListener listener) {
 		setFinishedListened(listener);

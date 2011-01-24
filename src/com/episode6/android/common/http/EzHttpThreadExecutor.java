@@ -13,24 +13,16 @@ public class EzHttpThreadExecutor extends ThreadPoolExecutor {
 	private static EzHttpThreadExecutor QUEUE_EXECUTOR = null;
 	private static EzHttpThreadExecutor STACK_EXECUTOR = null;
 	
-	public static EzHttpThreadExecutor queueInstance() {
+	public static synchronized EzHttpThreadExecutor queueInstance() {
 		if (QUEUE_EXECUTOR == null) {
-			synchronized(QUEUE_EXECUTOR) {
-				if (QUEUE_EXECUTOR == null) {
-					QUEUE_EXECUTOR = new EzHttpThreadExecutor(1, 2, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10, true));
-				}
-			}
+			QUEUE_EXECUTOR = new EzHttpThreadExecutor(1, 2, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10, true));
 		}
 		return QUEUE_EXECUTOR;
 	}
 	
-	public static EzHttpThreadExecutor stackInstance() {
+	public static synchronized EzHttpThreadExecutor stackInstance() {
 		if (STACK_EXECUTOR == null) {
-			synchronized(STACK_EXECUTOR) {
-				if (STACK_EXECUTOR == null) {
-					STACK_EXECUTOR = new EzHttpThreadExecutor(2, 2, 5, TimeUnit.SECONDS, new LinkedBlockingStack<Runnable>());
-				}
-			}
+			STACK_EXECUTOR = new EzHttpThreadExecutor(2, 2, 5, TimeUnit.SECONDS, new LinkedBlockingStack<Runnable>());
 		}
 		return STACK_EXECUTOR;
 	}
@@ -84,6 +76,13 @@ public class EzHttpThreadExecutor extends ThreadPoolExecutor {
 		public void run() {
 			mResponse = mRequest.execute();
 			if (mRequest.getRequestFinishedListener() != null)
+				if (mResponse.wasSuccess()) {
+					mRequest.getRequestFinishedListener().onHttpRequestSucceededInBackground(mResponse);
+				} else {
+					mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
+				}
+			
+			
 				mHandler.post(new Runnable() {
 					
 					@Override

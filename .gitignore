@@ -41,3 +41,12 @@ bin/com/episode6/android/common/util/concurrent/LinkedBlockingStack.class
 bin/e6-android-common.apk
 bin/resources.ap_
 gen/com/episode6/android/common/R.java
+bin/com/episode6/android/common/http/EzHttpRequest$EzHttpPostUploadEntity.class
+bin/com/episode6/android/common/http/EzHttpRequest$EzHttpRequestListener.class
+bin/com/episode6/android/common/http/EzHttpRequest$EzHttpRequestProgressListener.class
+bin/com/episode6/android/common/http/EzHttpRequest$EzHttpResponse.class
+bin/com/episode6/android/common/http/EzHttpRequest$RequestFactory.class
+bin/com/episode6/android/common/http/EzHttpRequest.class
+bin/com/episode6/android/common/http/upload/AbstractEzHttpPostUploadEntity.class
+bin/com/episode6/android/common/http/upload/EzHttpFilePostUploadEntity.class
+bin/com/episode6/android/common/http/upload/EzHttpUriPostUploadEntity.class

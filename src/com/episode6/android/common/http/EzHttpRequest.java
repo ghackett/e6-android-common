@@ -289,7 +289,15 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	}
 	
 	
+	public void executeAsyncOnStack(EzHttpRequestListener listener) {
+		setFinishedListened(listener);
+		EzHttpThreadExecutor.executeStackRequest(this);
+	}
 	
+	public void executeAsyncOnQueue(EzHttpRequestListener listener) {
+		setFinishedListened(listener);
+		EzHttpThreadExecutor.executeQueueRequest(this);
+	}
 	
 	
 	public EzHttpResponse execute() {

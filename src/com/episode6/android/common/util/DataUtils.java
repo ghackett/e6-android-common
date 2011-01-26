@@ -2,6 +2,7 @@ package com.episode6.android.common.util;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,6 +14,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import android.content.Context;
+import android.os.Environment;
 
 public class DataUtils {
 //	private static final String TAG = "DataUtils";
@@ -116,6 +118,13 @@ public class DataUtils {
 			e.printStackTrace();
 		}
 	}
+	
+	public static void copyTextToFile(String text, File to, boolean overwrite) {
+		ByteArrayInputStream from = new ByteArrayInputStream(text.getBytes());
+		copyInputStreamToFile(from, to, DEFAULT_BUFFER_SIZE, true, overwrite, null);
+	}
+	
+
 	
 	
 	
@@ -293,5 +302,22 @@ public class DataUtils {
 			return false;
 		}
 		
+	}
+	
+	
+	
+	
+	
+	
+	
+	/**
+	 * DEVELOPMENT FUNCTION
+	 * @param text
+	 */
+	public static void DEV_copyTextToPublicTempFile(String text) {
+		if (text == null)
+			return;
+		File dest = new File(Environment.getExternalStorageDirectory(), "e6tmpfile_" + System.currentTimeMillis() + ".tmp");
+		copyTextToFile(text, dest, true);
 	}
 }

@@ -30,7 +30,6 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.episode6.android.common.util.Base64;
 import com.episode6.android.common.util.DataUtils;
@@ -333,7 +332,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 			}
 		}
 		
-		Log.d("EzHttpReq", "performing http request - " + url);
+//		Log.d("EzHttpReq", "performing http request - " + url);
 		
 		try {
 			switch(mReqType) {
@@ -399,8 +398,8 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 
 			handleResponseInputStream(ezResponse, entity.getContent());
 			
-			if (!isRaw())
-				Log.d("EzHttpReq", "server response = " + ezResponse.getResponseText());
+//			if (!isRaw())
+//				Log.d("EzHttpReq", "server response = " + ezResponse.getResponseText());
 			
 		} catch (Exception e) {
 			e.printStackTrace();

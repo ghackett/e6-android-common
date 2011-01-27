@@ -53,7 +53,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	public interface EzHttpRequestListener {
 		public void onHttpRequestSucceeded(EzHttpResponse response);
 		public void onHttpRequestFailed(EzHttpResponse response);
-		public void onHttpRequestSucceededInBackground(EzHttpResponse response);
+		public void onHttpRequestSucceededInBackground(EzHttpResponse response) throws Exception;
 		public void onHttpRequestFailedInBackground(EzHttpResponse response);
 	}
 	
@@ -531,7 +531,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	
 	public static class EzHttpResponse {
 		private EzHttpRequest mRequest;
-		private boolean mSuccess;
+		protected boolean mSuccess;
 		private int mResponseCode;
 		private String mResponseReasonPhrase;
 		private String mResponseContentType;
@@ -603,6 +603,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		public Object getTag() {
 			return mRequest.getTag();
 		}
+		
 	}
 	
 

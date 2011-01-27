@@ -77,7 +77,13 @@ public class EzHttpThreadExecutor extends ThreadPoolExecutor {
 			mResponse = mRequest.execute();
 			if (mRequest.getRequestFinishedListener() != null)
 				if (mResponse.wasSuccess()) {
-					mRequest.getRequestFinishedListener().onHttpRequestSucceededInBackground(mResponse);
+					try {
+						mRequest.getRequestFinishedListener().onHttpRequestSucceededInBackground(mResponse);
+					} catch (Exception e) {
+						e.printStackTrace();
+						mResponse.mSuccess = false;
+						mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
+					}
 				} else {
 					mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
 				}

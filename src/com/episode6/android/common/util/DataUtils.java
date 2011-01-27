@@ -314,10 +314,10 @@ public class DataUtils {
 	 * DEVELOPMENT FUNCTION
 	 * @param text
 	 */
-	public static void DEV_copyTextToPublicTempFile(String text) {
+	public static void DEV_copyTextToPublicTempFile(String text, String prefix) {
 		if (text == null)
 			return;
-		File dest = new File(Environment.getExternalStorageDirectory(), "e6tmpfile_" + System.currentTimeMillis() + ".tmp");
+		File dest = new File(Environment.getExternalStorageDirectory(), "e6tmpfile_" + prefix + "_" + System.currentTimeMillis() + ".tmp");
 		copyTextToFile(text, dest, true);
 	}
 }

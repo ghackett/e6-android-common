@@ -13,6 +13,11 @@ public class EzHttpThreadExecutor extends ThreadPoolExecutor {
 	private static EzHttpThreadExecutor QUEUE_EXECUTOR = null;
 	private static EzHttpThreadExecutor STACK_EXECUTOR = null;
 	
+	public static synchronized void initInstances() {
+		queueInstance();
+		stackInstance();
+	}
+	
 	public static synchronized EzHttpThreadExecutor queueInstance() {
 		if (QUEUE_EXECUTOR == null) {
 			QUEUE_EXECUTOR = new EzHttpThreadExecutor(1, 2, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10, true));
@@ -74,7 +79,12 @@ public class EzHttpThreadExecutor extends ThreadPoolExecutor {
 
 		@Override
 		public void run() {
-			mResponse = mRequest.execute();
+			try {
+				mResponse = mRequest.execute();
+			} catch (Throwable t) {
+				t.printStackTrace();
+				mResponse = mRequest.generateExceptionResponse(t);
+			}
 			if (mRequest.getRequestFinishedListener() != null)
 				if (mResponse.wasSuccess()) {
 					try {

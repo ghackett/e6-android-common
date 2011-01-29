@@ -54,3 +54,4 @@ bin/com/episode6/android/common/http/EzHttpThreadExecutor$EasyHttpExecutorRunnab
 bin/com/episode6/android/common/http/EzHttpThreadExecutor$EasyHttpExecutorRunnable.class
 bin/com/episode6/android/common/http/EzHttpThreadExecutor.class
 bin/com/episode6/android/common/http/EzHttpRequest$EzRequestFactory.class
+bin/com/episode6/android/common/util/ExceptionUtils.class

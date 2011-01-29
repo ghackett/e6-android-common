@@ -19,6 +19,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -28,11 +29,13 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
+import org.json.JSONObject;
 
 import android.content.Context;
 
 import com.episode6.android.common.util.Base64;
 import com.episode6.android.common.util.DataUtils;
+import com.episode6.android.common.util.ExceptionUtils;
 
 public class EzHttpRequest implements DataUtils.ProgressListener {
 	
@@ -307,6 +310,15 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		EzHttpThreadExecutor.executeQueueRequest(this);
 	}
 	
+	public EzHttpResponse generateExceptionResponse(Throwable e) {
+		EzHttpResponse response = new EzHttpResponse(this);
+		response.mResponseCode = -1;
+		response.mSuccess = false;
+		response.mResponseReasonPhrase = e.getMessage();
+		response.mResponseText = ExceptionUtils.getThrowableTraceAsString(e);
+		return response;
+	}
+	
 	
 	public EzHttpResponse execute() {
 		if (mReqType == REQ_POST_MULTIPART)
@@ -321,7 +333,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		
 		String url = mUrl;
 		
-		if (mReqType != REQ_POST && mParams != null && mParams.size() > 0) {
+		if (mReqType != REQ_POST && mReqType != REQ_PUT && mParams != null && mParams.size() > 0) {
 			for (NameValuePair param : mParams) {
 				if (url.contains("?")) {
 					url += "&";
@@ -341,7 +353,9 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 					break;
 				}
 				case REQ_PUT: {
-					message = new HttpPost(url);
+					message = new HttpPut(url);
+					if (mParams != null)
+						((HttpPut)message).setEntity(new UrlEncodedFormEntity(mParams, HTTP.UTF_8));
 					break;
 				}
 				case REQ_DEL: {
@@ -406,6 +420,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 			ezResponse.mSuccess = false;
 			ezResponse.mResponseCode = -1;
 			ezResponse.mResponseReasonPhrase = e.getMessage();
+			ezResponse.mResponseText = ExceptionUtils.getThrowableTraceAsString(e);
 		}
 		
 		return ezResponse;
@@ -510,6 +525,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 			ezResponse.mSuccess = false;
 			ezResponse.mResponseCode = -1;
 			ezResponse.mResponseReasonPhrase = e.getMessage();
+			ezResponse.mResponseText = ExceptionUtils.getThrowableTraceAsString(e);
 		}
 		
 		return ezResponse;
@@ -527,6 +543,54 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		}
 	}
 	
+	
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		b.append("EzHttpRequest: " + mUrl + "\n");
+		b.append("RequestCode: " + mRequestCode + "\n");
+		b.append("Request Type: ");
+		switch(mReqType) {
+		case REQ_GET: {
+			b.append("GET");
+			break;
+		}
+		case REQ_PUT: {
+			b.append("PUT");
+			break;
+		}
+		case REQ_DEL: {
+			b.append("DELETE");
+			break;
+		}
+		case REQ_HEAD: {
+			b.append("HEAD");
+			break;
+		}
+		case REQ_POST: {
+			b.append("POST");
+			break;
+		}
+		case REQ_POST_MULTIPART: {
+			b.append("POST-MULTIPART");
+			break;
+		}
+		case REQ_POST_STRING_ENT: {
+			b.append("POST-STRING-ENTITY");
+			break;
+		}
+		}
+		b.append("\nIs Raw: " + (mIsRaw ? "Yes" : "No") + "\n");
+		
+		if (mParams != null) {
+			b.append("\nParameters: \n");
+			for (NameValuePair param : mParams) {
+				b.append("\t" + param.getName() + " = " + param.getValue() + "\n");
+			}
+			b.append("\n");
+		}
+		return b.toString();
+	}
 	
 	
 	public static class EzHttpResponse {
@@ -602,6 +666,36 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		}
 		public Object getTag() {
 			return mRequest.getTag();
+		}
+		public void setTag(Object tag) {
+			mRequest.setTag(tag);
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder b = new StringBuilder(mRequest.toString());
+			b.append("\n\nEzHttpResponse: " + (mSuccess ? "Success: " : "Failure: ") + mResponseCode + "\n");
+			b.append("ReasonPhrase: " + cnull(mResponseReasonPhrase) + "\n");
+			b.append("ContentType: " + cnull(mResponseContentType) + "\n");
+			b.append("ContentEncoding: " + cnull(mResponseContentEncoding) + "\n");
+			b.append("LastModTime: " + mResponseLastModTime + "\n");
+			b.append("Response: \n");
+			if (!mSuccess || !isRaw()) {
+				try {
+					b.append(new JSONObject(mResponseText).toString(4));
+				} catch (Exception e) {
+					e.printStackTrace();
+					b.append(cnull(mResponseText));
+				}
+			} else {
+				b.append("BINARY FILE");
+			}
+			return b.toString();
+		}
+		private String cnull(String str) {
+			if (str == null)
+				return "";
+			return str;
 		}
 		
 	}

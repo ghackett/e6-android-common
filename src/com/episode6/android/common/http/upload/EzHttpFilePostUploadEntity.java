@@ -9,8 +9,8 @@ public class EzHttpFilePostUploadEntity extends AbstractEzHttpPostUploadEntity {
 
 	private File mFile;
 
-	public EzHttpFilePostUploadEntity(File f, String paramName, String postFileName) {
-		super(paramName, postFileName);
+	public EzHttpFilePostUploadEntity(File f, String paramName, String postFileName, String contentType) {
+		super(paramName, postFileName, contentType);
 		mFile = f;
 		if ((!mFile.exists()) || !(mFile.isFile())) {
 			throw new RuntimeException("Tried to create an EzHttpFilePostUploadEntity from a file that does not exist");

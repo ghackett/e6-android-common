@@ -68,6 +68,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	public interface EzHttpPostUploadEntity {
 		public String getParamName();
 		public String getPostFileName();
+		public String getContentType();
 		public InputStream getInputStream();
 		public long getSize();
 	}
@@ -446,7 +447,9 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	private static final String VAL_BOUNDRY = "***MIMEFileUpload***";
 	private static final String VAL_POST_MULTIPART_CONTENT_TYPE = "multipart/form-data;boundary=" + VAL_BOUNDRY;
 	private static final String VAL_FILE_CONTENT_DISPOSITION_FORMATER = "Content-Disposition: form-data; name=\"%s\"; filename=\"%s\"\r\n";
-	private static final String VAL_PARAM_CONTENT_DISPOSITION_FORMATER = "Content-Disposition: form-data; name=\"%s\"\r\n";
+	private static final String VAL_FILE_CONTENT_TYPE_FORMATTER = "Content-Type: %s\r\n";
+	private static final String VAL_FILE_CONTENT_TRANSFER_ENCODING = "Content-Transfer-Encoding: binary\r\n\r\n";
+	private static final String VAL_PARAM_CONTENT_DISPOSITION_FORMATER = "Content-Disposition: form-data; name=\"%s\"\r\n\r\n";
 	private static final String VAL_POST_SEPERATOR = VAL_TWO_HYPHENS + VAL_BOUNDRY + VAL_LINE_END;
 	private static final String VAL_POST_CLOSE = VAL_TWO_HYPHENS + VAL_BOUNDRY + VAL_TWO_HYPHENS + VAL_LINE_END;	
 	
@@ -495,6 +498,8 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 					mTotalBytes = uploadFile.getSize();
 					
 					outputStream.writeBytes(String.format(VAL_FILE_CONTENT_DISPOSITION_FORMATER, uploadFile.getParamName(), uploadFile.getPostFileName()));
+					outputStream.writeBytes(String.format(VAL_FILE_CONTENT_TYPE_FORMATTER, uploadFile.getContentType()));
+					outputStream.writeBytes(VAL_FILE_CONTENT_TRANSFER_ENCODING);
 					DataUtils.copyInputStreamToOutputStream(uploadFile.getInputStream(), outputStream, DataUtils.DEFAULT_BUFFER_SIZE, true, false, this);
 					outputStream.writeBytes(VAL_LINE_END);
 					

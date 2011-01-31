@@ -12,8 +12,8 @@ public class EzHttpUriPostUploadEntity extends AbstractEzHttpPostUploadEntity {
 	private Uri mUri;
 	private ContentResolver mContentResolver;
 
-	public EzHttpUriPostUploadEntity(Context c, Uri uri, String paramName, String postFileName) {
-		super(paramName, postFileName);
+	public EzHttpUriPostUploadEntity(Context c, Uri uri, String paramName, String postFileName, String contentType) {
+		super(paramName, postFileName, contentType);
 		mUri = uri;
 		mContentResolver = c.getContentResolver();
 	}

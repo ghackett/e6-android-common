@@ -150,9 +150,9 @@ mTabHost.addTab(TAB_TAG_1, "Hello, world!", "Tab 1");
      * @param activityGroup Used to launch activities for tab content.
      */
     public void setup(EzTabActivity tabActivity) {
-        setup();
         mTabActivity = tabActivity;
         mLocalActivityManager = tabActivity.getLocalActivityManager();
+        setup();
     }
 
 
@@ -208,7 +208,10 @@ mTabHost.addTab(TAB_TAG_1, "Hello, world!", "Tab 1");
 //        if (tabSpec.mIndicatorStrategy instanceof ViewIndicatorStrategy) {
 //            mTabWidget.setStripEnabled(false);
 //        }
-        mTabWidget.addView(tabIndicator);
+        if (tabIndicator.getParent() == null)
+        	mTabWidget.addView(tabIndicator);
+
+        mTabWidget.prepareTabIndicator(tabIndicator);
         mTabSpecs.add(tabSpec);
 
         if (mCurrentTab == -1) {

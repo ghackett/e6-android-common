@@ -1,10 +1,12 @@
 package com.episode6.android.common.ui.tab;
 
+import java.util.ArrayList;
+
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnFocusChangeListener;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TabHost;
 
@@ -22,6 +24,8 @@ public class EzTabWidget extends LinearLayout implements OnFocusChangeListener {
 //    private Drawable mDividerDrawable;
 
 //    private final Rect mBounds = new Rect();
+    
+    private ArrayList<View> mTabIndicators;
 
     public EzTabWidget(Context context) {
         this(context, null);
@@ -56,18 +60,18 @@ public class EzTabWidget extends LinearLayout implements OnFocusChangeListener {
 //        super.onSizeChanged(w, h, oldw, oldh);
 //    }
 
-    @Override
-    protected int getChildDrawingOrder(int childCount, int i) {
-        // Always draw the selected tab last, so that drop shadows are drawn
-        // in the correct z-order.
-        if (i == childCount - 1) {
-            return mSelectedTab;
-        } else if (i >= mSelectedTab) {
-            return i + 1;
-        } else {
-            return i;
-        }
-    }
+//    @Override
+//    protected int getChildDrawingOrder(int childCount, int i) {
+//        // Always draw the selected tab last, so that drop shadows are drawn
+//        // in the correct z-order.
+//        if (i == childCount - 1) {
+//            return mSelectedTab;
+//        } else if (i >= mSelectedTab) {
+//            return i + 1;
+//        } else {
+//            return i;
+//        }
+//    }
 
     private void initTabWidget() {
 
@@ -100,6 +104,7 @@ public class EzTabWidget extends LinearLayout implements OnFocusChangeListener {
 
         // Deal with focus, as we don't want the focus to go by default
         // to a tab other than the current tab
+    	mTabIndicators = new ArrayList<View>();
         setFocusable(true);
         setOnFocusChangeListener(this);
     }
@@ -116,7 +121,7 @@ public class EzTabWidget extends LinearLayout implements OnFocusChangeListener {
 //        if (mDividerDrawable != null) {
 //            index *= 2;
 //        }
-        return getChildAt(index);
+        return mTabIndicators.get(index);
     }
 
     /**
@@ -124,7 +129,7 @@ public class EzTabWidget extends LinearLayout implements OnFocusChangeListener {
      * @return the number of tab indicator views.
      */
     public int getTabCount() {
-        int children = getChildCount();
+//        int children = getChildCount();
 
         // If we have dividers, then we will always have an odd number of
         // children: 1, 3, 5, ... and we want to convert that sequence to
@@ -132,7 +137,7 @@ public class EzTabWidget extends LinearLayout implements OnFocusChangeListener {
 //        if (mDividerDrawable != null) {
 //            children = (children + 1) / 2;
 //        }
-        return children;
+        return mTabIndicators.size();
     }
 
     /**
@@ -343,38 +348,56 @@ public class EzTabWidget extends LinearLayout implements OnFocusChangeListener {
         }
     }
 
-    @Override
-    public void addView(View child) {
-        if (child.getLayoutParams() == null) {
-            final LinearLayout.LayoutParams lp = new LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.FILL_PARENT, 1.0f);
-            lp.setMargins(0, 0, 0, 0);
-            child.setLayoutParams(lp);
-        }
-
-        // Ensure you can navigate to the tab with the keyboard, and you can touch it
-        child.setFocusable(true);
-        child.setClickable(true);
-
-        // If we have dividers between the tabs and we already have at least one
-        // tab, then add a divider before adding the next tab.
-//        if (mDividerDrawable != null && getTabCount() > 0) {
-//            ImageView divider = new ImageView(mContext);
+//    @Override
+//    public void addView(View child) {
+//        if (child.getLayoutParams() == null) {
 //            final LinearLayout.LayoutParams lp = new LayoutParams(
-//                    mDividerDrawable.getIntrinsicWidth(),
-//                    LayoutParams.MATCH_PARENT);
+//                    0,
+//                    ViewGroup.LayoutParams.FILL_PARENT, 1.0f);
 //            lp.setMargins(0, 0, 0, 0);
-//            divider.setLayoutParams(lp);
-//            divider.setBackgroundDrawable(mDividerDrawable);
-//            super.addView(divider);
+//            child.setLayoutParams(lp);
 //        }
-        super.addView(child);
+//
+//        // Ensure you can navigate to the tab with the keyboard, and you can touch it
+//        child.setFocusable(true);
+//        child.setClickable(true);
+//
+//        // If we have dividers between the tabs and we already have at least one
+//        // tab, then add a divider before adding the next tab.
+////        if (mDividerDrawable != null && getTabCount() > 0) {
+////            ImageView divider = new ImageView(mContext);
+////            final LinearLayout.LayoutParams lp = new LayoutParams(
+////                    mDividerDrawable.getIntrinsicWidth(),
+////                    LayoutParams.MATCH_PARENT);
+////            lp.setMargins(0, 0, 0, 0);
+////            divider.setLayoutParams(lp);
+////            divider.setBackgroundDrawable(mDividerDrawable);
+////            super.addView(divider);
+////        }
+//        super.addView(child);
+//
+//        // TODO: detect this via geometry with a tabwidget listener rather
+//        // than potentially interfere with the view's listener
+//        child.setOnClickListener(new TabClickListener(getTabCount() - 1));
+//        child.setOnFocusChangeListener(this);
+//    }
+    
+    /**
+     * like addView but without actually adding the view
+     * @param v
+     */
+    public void prepareTabIndicator(View v) {
+    	  // Ensure you can navigate to the tab with the keyboard, and you can touch it
+        v.setFocusable(true);
+        v.setClickable(true);
+
 
         // TODO: detect this via geometry with a tabwidget listener rather
         // than potentially interfere with the view's listener
-        child.setOnClickListener(new TabClickListener(getTabCount() - 1));
-        child.setOnFocusChangeListener(this);
+        mTabIndicators.add(v);
+        v.setOnClickListener(new TabClickListener(getTabCount() - 1));
+        v.setOnFocusChangeListener(this);
+        
     }
 
     /**
@@ -414,6 +437,7 @@ public class EzTabWidget extends LinearLayout implements OnFocusChangeListener {
         }
 
         public void onClick(View v) {
+        	Log.e("TEST", "CLICKED TAB " + mTabIndex);
             mSelectionChangedListener.onTabSelectionChanged(mTabIndex, true);
         }
     }

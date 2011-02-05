@@ -85,17 +85,27 @@ public class EzHttpThreadExecutor extends ThreadPoolExecutor {
 				t.printStackTrace();
 				mResponse = mRequest.generateExceptionResponse(t);
 			}
-			if (mRequest.getRequestFinishedListener() != null)
+			
+			if (mRequest.getRequestFinishedListener() != null) {
 				if (mResponse.wasSuccess()) {
 					try {
 						mRequest.getRequestFinishedListener().onHttpRequestSucceededInBackground(mResponse);
 					} catch (Exception e) {
 						e.printStackTrace();
 						mResponse.mSuccess = false;
-						mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
+						try {
+							mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
+						} catch (Exception e2) {
+							e2.printStackTrace();
+						}
 					}
 				} else {
-					mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
+					try {
+						mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
+					} catch (Exception e2) {
+						e2.printStackTrace();
+					}
+//					mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
 				}
 			
 			
@@ -103,12 +113,14 @@ public class EzHttpThreadExecutor extends ThreadPoolExecutor {
 					
 					@Override
 					public void run() {
-						if (mResponse.wasSuccess())
+						if (mResponse.wasSuccess()) {
 							mRequest.getRequestFinishedListener().onHttpRequestSucceeded(mResponse);
-						else
+						} else {
 							mRequest.getRequestFinishedListener().onHttpRequestFailed(mResponse);
+						}
 					}
 				});
+			}
 		}
 		
 	}

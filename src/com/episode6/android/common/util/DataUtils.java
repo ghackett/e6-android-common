@@ -315,16 +315,20 @@ public class DataUtils {
 	 * @param text
 	 */
 	public static void DEV_copyTextToPublicTempFile(String text, String prefix) {
-		if (text == null)
-			return;
-		if (prefix == null)
-			prefix = "";
-		
-		File dir = new File(Environment.getExternalStorageDirectory(), "e6dev");
-		if (!dir.exists())
-			dir.mkdirs();
-		
-		File dest = new File(dir, "e6tmpfile_" + System.currentTimeMillis() + "_" + prefix + ".tmp");
-		copyTextToFile(text, dest, true);
+		try {
+			if (text == null)
+				return;
+			if (prefix == null)
+				prefix = "";
+			
+			File dir = new File(Environment.getExternalStorageDirectory(), "e6dev");
+			if (!dir.exists())
+				dir.mkdirs();
+			
+			File dest = new File(dir, "e6tmpfile_" + System.currentTimeMillis() + "_" + prefix + ".tmp");
+			copyTextToFile(text, dest, true);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

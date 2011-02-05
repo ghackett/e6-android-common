@@ -4,6 +4,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream.GetField;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -138,6 +139,10 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	private EzHttpRequestListener mFinishedListener;
 	private EzHttpRequestProgressListener mProgressListener;
 	
+	private EzHttpResponseProcessor mResponseProcessor;
+	private Handler mHandler;
+	
+	
 	
 	private long mTotalBytes;
 	private int mCurrentFile;
@@ -162,6 +167,9 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		
 		mFinishedListener = null;
 		mProgressListener = null;
+		
+		mResponseProcessor = null;
+		mHandler = null;
 		
 		mTotalBytes = 1;
 		mCurrentFile = 0;
@@ -217,6 +225,14 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	}
 	public String getStringEntityEncoding() {
 		return mStringEntityEncoding;
+	}
+	
+	
+	public void setResponseProcessor(EzHttpResponseProcessor processor) {
+		mResponseProcessor = processor;
+	}
+	public void setHandler(Handler handler) {
+		mHandler = handler;
 	}
 	
 	
@@ -295,22 +311,22 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		mProgressListener = listener;
 	}
 	
-	public void executeAsync(EzHttpRequestListener listener, boolean highPriority) {
-		if (highPriority)
-			executeAsyncOnStack(listener);
-		else
-			executeAsyncOnQueue(listener);
-	}
-	
-	public void executeAsyncOnStack(EzHttpRequestListener listener) {
-		setFinishedListened(listener);
-		EzHttpThreadExecutor.executeStackRequest(this);
-	}
-	
-	public void executeAsyncOnQueue(EzHttpRequestListener listener) {
-		setFinishedListened(listener);
-		EzHttpThreadExecutor.executeQueueRequest(this);
-	}
+//	public void executeAsync(EzHttpRequestListener listener, boolean highPriority) {
+//		if (highPriority)
+//			executeAsyncOnStack(listener);
+//		else
+//			executeAsyncOnQueue(listener);
+//	}
+//	
+//	public void executeAsyncOnStack(EzHttpRequestListener listener) {
+//		setFinishedListened(listener);
+//		EzHttpThreadExecutor.executeStackRequest(this);
+//	}
+//	
+//	public void executeAsyncOnQueue(EzHttpRequestListener listener) {
+//		setFinishedListened(listener);
+//		EzHttpThreadExecutor.executeQueueRequest(this);
+//	}
 	
 	public EzHttpResponse generateExceptionResponse(Throwable e) {
 		EzHttpResponse response = new EzHttpResponse(this);
@@ -321,14 +337,44 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		return response;
 	}
 	
-	public EzHttpResponse executeAndRespondInSync(EzHttpRequestListener listener, Handler handler) {
-		setFinishedListened(listener);
-		return executeAndRespondInSync(handler);
+
+	
+
+	
+
+	
+
+	public void executeAsync(EzHttpRequestListener listener, EzHttpThreadExecutor threadExecutor, EzHttpResponseProcessor responseProcessor) {
+		mResponseProcessor = responseProcessor;
+		executeAsync(listener, threadExecutor);
 	}
 	
-	public EzHttpResponse executeAndRespondInSync(Handler handler) {
-		
-		
+	public void executeAsync(EzHttpRequestListener listener, EzHttpThreadExecutor threadExecutor) {
+		setFinishedListened(listener);
+		executeAsync(threadExecutor);
+	}
+	
+	public void executeAsync(EzHttpThreadExecutor threadExecutor) {
+		threadExecutor.executeRequest(this);
+	}
+	
+	public EzHttpResponse executeInSync(EzHttpRequestListener listener, Handler handler) {
+		setFinishedListened(listener);
+		return executeInSync(handler);
+	}
+	
+	public EzHttpResponse executeInSync(Handler handler) {
+		mHandler = handler;
+		return executeInSync();
+	}
+	
+	public EzHttpResponse executeInSync(EzHttpRequestListener listener, EzHttpResponseProcessor processor) {
+		setFinishedListened(listener);
+		mResponseProcessor = processor;
+		return executeInSync();
+	}
+	
+	public EzHttpResponse executeInSync() {
 		EzHttpResponse response = null;
 		try {
 			response = execute();
@@ -336,39 +382,11 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 			t.printStackTrace();
 			response = generateExceptionResponse(t);
 		}
-		
-		if (getRequestFinishedListener() != null) {
-			if (response.wasSuccess()) {
-				try {
-					getRequestFinishedListener().onHttpRequestSucceededInBackground(response);
-				} catch (Throwable t) {
-					t.printStackTrace();
-					response.mSuccess = false;
-					getRequestFinishedListener().onHttpRequestFailedInBackground(response);
-				} 
-			} else {
-				getRequestFinishedListener().onHttpRequestFailedInBackground(response);
-			}
-			
-			
-			final EzHttpResponse finalResponse = response;
-			handler.post(new Runnable() {
-				
-				@Override
-				public void run() {
-					if (finalResponse.wasSuccess()) {
-						getRequestFinishedListener().onHttpRequestSucceeded(finalResponse);
-					} else {
-						getRequestFinishedListener().onHttpRequestFailed(finalResponse);
-					}
-				}
-			});
-		}
-		
+		response.onExecuteComplete();
 		return response;
 	}
 	
-	public EzHttpResponse execute() {
+	private EzHttpResponse execute() {
 		if (mReqType == REQ_POST_MULTIPART)
 			return executeMultipartPostRequest();
 		
@@ -647,7 +665,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	
 	public static class EzHttpResponse {
 		private EzHttpRequest mRequest;
-		protected boolean mSuccess;
+		private boolean mSuccess;
 		private int mResponseCode;
 		private String mResponseReasonPhrase;
 		private String mResponseContentType;
@@ -750,6 +768,52 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 			return str;
 		}
 		
+		protected void onExecuteComplete() {
+			if (mRequest.getRequestFinishedListener() != null) {
+				if (mRequest.mResponseProcessor != null) {
+					mRequest.mResponseProcessor.processResponse(this);
+				} else {
+					process(mRequest.mHandler);
+				}
+			}
+		}
+		
+		protected void process(Handler handler) {
+			if (mRequest.getRequestFinishedListener() != null) {
+				if (wasSuccess()) {
+					try {
+						mRequest.getRequestFinishedListener().onHttpRequestSucceededInBackground(this);
+					} catch (Throwable t) {
+						t.printStackTrace();
+						mSuccess = false;
+						mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(this);
+					} 
+				} else {
+					mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(this);
+				}
+				
+				
+				if (handler == null) {
+					if (wasSuccess()) {
+						mRequest.getRequestFinishedListener().onHttpRequestSucceeded(EzHttpResponse.this);
+					} else {
+						mRequest.getRequestFinishedListener().onHttpRequestFailed(EzHttpResponse.this);
+					}					
+				} else {
+					handler.post(new Runnable() {
+						
+						@Override
+						public void run() {
+							if (wasSuccess()) {
+								mRequest.getRequestFinishedListener().onHttpRequestSucceeded(EzHttpResponse.this);
+							} else {
+								mRequest.getRequestFinishedListener().onHttpRequestFailed(EzHttpResponse.this);
+							}
+						}
+					});
+				}
+			}
+		}
 	}
 	
 

@@ -70,57 +70,59 @@ public class EzHttpThreadExecutor extends ThreadPoolExecutor {
 	
 	private class EasyHttpExecutorRunnable implements Runnable {
 		private EzHttpRequest mRequest;
-		private EzHttpRequest.EzHttpResponse mResponse;
+//		private EzHttpRequest.EzHttpResponse mResponse;
 		
 		public EasyHttpExecutorRunnable(EzHttpRequest req) {
 			mRequest = req;
-			mResponse = null;
+//			mResponse = null;
 		}
 
 		@Override
 		public void run() {
-			try {
-				mResponse = mRequest.execute();
-			} catch (Throwable t) {
-				t.printStackTrace();
-				mResponse = mRequest.generateExceptionResponse(t);
-			}
+			mRequest.executeAndRespondInSync(mHandler);
 			
-			if (mRequest.getRequestFinishedListener() != null) {
-				if (mResponse.wasSuccess()) {
-					try {
-						mRequest.getRequestFinishedListener().onHttpRequestSucceededInBackground(mResponse);
-					} catch (Exception e) {
-						e.printStackTrace();
-						mResponse.mSuccess = false;
-						try {
-							mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
-						} catch (Exception e2) {
-							e2.printStackTrace();
-						}
-					}
-				} else {
-					try {
-						mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
-					} catch (Exception e2) {
-						e2.printStackTrace();
-					}
-//					mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
-				}
-			
-			
-				mHandler.post(new Runnable() {
-					
-					@Override
-					public void run() {
-						if (mResponse.wasSuccess()) {
-							mRequest.getRequestFinishedListener().onHttpRequestSucceeded(mResponse);
-						} else {
-							mRequest.getRequestFinishedListener().onHttpRequestFailed(mResponse);
-						}
-					}
-				});
-			}
+//			try {
+//				mResponse = mRequest.execute();
+//			} catch (Throwable t) {
+//				t.printStackTrace();
+//				mResponse = mRequest.generateExceptionResponse(t);
+//			}
+//			
+//			if (mRequest.getRequestFinishedListener() != null) {
+//				if (mResponse.wasSuccess()) {
+//					try {
+//						mRequest.getRequestFinishedListener().onHttpRequestSucceededInBackground(mResponse);
+//					} catch (Exception e) {
+//						e.printStackTrace();
+//						mResponse.mSuccess = false;
+//						try {
+//							mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
+//						} catch (Exception e2) {
+//							e2.printStackTrace();
+//						}
+//					}
+//				} else {
+//					try {
+//						mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
+//					} catch (Exception e2) {
+//						e2.printStackTrace();
+//					}
+////					mRequest.getRequestFinishedListener().onHttpRequestFailedInBackground(mResponse);
+//				}
+//			
+//			
+//				mHandler.post(new Runnable() {
+//					
+//					@Override
+//					public void run() {
+//						if (mResponse.wasSuccess()) {
+//							mRequest.getRequestFinishedListener().onHttpRequestSucceeded(mResponse);
+//						} else {
+//							mRequest.getRequestFinishedListener().onHttpRequestFailed(mResponse);
+//						}
+//					}
+//				});
+//			}
 		}
 		
 	}

@@ -32,6 +32,7 @@ import org.apache.http.protocol.HTTP;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.os.Handler;
 
 import com.episode6.android.common.util.Base64;
 import com.episode6.android.common.util.DataUtils;
@@ -320,6 +321,52 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		return response;
 	}
 	
+	public EzHttpResponse executeAndRespondInSync(EzHttpRequestListener listener, Handler handler) {
+		setFinishedListened(listener);
+		return executeAndRespondInSync(handler);
+	}
+	
+	public EzHttpResponse executeAndRespondInSync(Handler handler) {
+		
+		
+		EzHttpResponse response = null;
+		try {
+			response = execute();
+		} catch (Throwable t) {
+			t.printStackTrace();
+			response = generateExceptionResponse(t);
+		}
+		
+		if (getRequestFinishedListener() != null) {
+			if (response.wasSuccess()) {
+				try {
+					getRequestFinishedListener().onHttpRequestSucceededInBackground(response);
+				} catch (Throwable t) {
+					t.printStackTrace();
+					response.mSuccess = false;
+					getRequestFinishedListener().onHttpRequestFailedInBackground(response);
+				} 
+			} else {
+				getRequestFinishedListener().onHttpRequestFailedInBackground(response);
+			}
+			
+			
+			final EzHttpResponse finalResponse = response;
+			handler.post(new Runnable() {
+				
+				@Override
+				public void run() {
+					if (finalResponse.wasSuccess()) {
+						getRequestFinishedListener().onHttpRequestSucceeded(finalResponse);
+					} else {
+						getRequestFinishedListener().onHttpRequestFailed(finalResponse);
+					}
+				}
+			});
+		}
+		
+		return response;
+	}
 	
 	public EzHttpResponse execute() {
 		if (mReqType == REQ_POST_MULTIPART)

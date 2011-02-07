@@ -4,7 +4,6 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream.GetField;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -34,12 +33,14 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 
 import com.episode6.android.common.util.Base64;
 import com.episode6.android.common.util.DataUtils;
 import com.episode6.android.common.util.ExceptionUtils;
 
 public class EzHttpRequest implements DataUtils.ProgressListener {
+	private static final String TAG = "EzHttpRequest";
 	
 	public static final int REQ_GET = 1;
 	public static final int REQ_PUT = 2;
@@ -379,6 +380,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		try {
 			response = execute();
 		} catch (Throwable t) {
+			Log.e(TAG, "Error performing requst to url: " + getUrl());
 			t.printStackTrace();
 			response = generateExceptionResponse(t);
 		}
@@ -482,6 +484,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 //				Log.d("EzHttpReq", "server response = " + ezResponse.getResponseText());
 			
 		} catch (Exception e) {
+			Log.e(TAG, "Error performing requst to url: " + getUrl());
 			e.printStackTrace();
 			ezResponse.mSuccess = false;
 			ezResponse.mResponseCode = -1;

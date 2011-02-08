@@ -29,6 +29,7 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.content.Context;
@@ -154,6 +155,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		mReqType = reqType;
 		mIsRaw = isRaw;
 		mTimeoutSecs = DEFAULT_TIMEOUT_SECS;
+		mContext = c;
 		
 		mStringEntity = null;
 		mStringEntityType = null;
@@ -377,6 +379,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	
 	public EzHttpResponse executeInSync() {
 		EzHttpResponse response = null;
+		long time = System.currentTimeMillis();
 		try {
 			response = execute();
 		} catch (Throwable t) {
@@ -384,6 +387,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 			t.printStackTrace();
 			response = generateExceptionResponse(t);
 		}
+		response.mRequestTime = System.currentTimeMillis() - time;
 		response.onExecuteComplete();
 		return response;
 	}
@@ -501,6 +505,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		} else {
 			mUploadingFiles = false;
 			mTotalBytes = ezResponse.getResponseContentLength();
+//			Log.e(TAG, "Context is " + (mContext == null ? "null" : "not null"));
 			File dataFile = File.createTempFile(TMP_FILE_PREFIX, null, mContext.getCacheDir());
 			DataUtils.copyInputStreamToFile(httpInputStream, dataFile, DataUtils.DEFAULT_BUFFER_SIZE, true, true, this);
 			ezResponse.mResponseFile = dataFile;
@@ -677,6 +682,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		private long mResponseContentLength;
 		private String mResponseText;
 		private File mResponseFile;
+		private long mRequestTime;
 
 		
 		private EzHttpResponse(EzHttpRequest request) {
@@ -723,6 +729,9 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		public String getResponseText() {
 			return mResponseText;
 		}
+		public long getRequestTime() {
+			return mRequestTime;
+		}
 		public File getResponseFile() {
 			return mResponseFile;
 		}
@@ -757,8 +766,11 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 				try {
 					b.append(new JSONObject(mResponseText).toString(4));
 				} catch (Exception e) {
-					e.printStackTrace();
-					b.append(cnull(mResponseText));
+					try {
+						b.append(new JSONArray(mResponseText).toString(4));
+					} catch (Exception e2) {
+						b.append(cnull(mResponseText));
+					}
 				}
 			} else {
 				b.append("BINARY FILE");

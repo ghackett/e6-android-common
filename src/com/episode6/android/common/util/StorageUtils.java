@@ -30,7 +30,7 @@ public class StorageUtils {
 		return getEmmcDirectory() != null;
 	}
 	
-	public static File findWritableDirectoryWithMostFreeSpace(Context c) {
+	public static File findWritableDirectoryWithMostFreeSpace(Context c, boolean includeInternalMemory) {
 		long mostUsableSpace = 0;
 		String rtr = null;
 		
@@ -69,14 +69,16 @@ public class StorageUtils {
 			}
 		}
 		
-		f = c.getFilesDir();
-		if (f.exists() && f.canWrite()) {
-			stats = new StatFs(f.getAbsolutePath());
-			long space = (long)stats.getBlockSize() * (long)stats.getBlockCount();
-//			long space = f.getUsableSpace();
-			if (space > mostUsableSpace) {
-				mostUsableSpace = space;
-				rtr = f.getAbsolutePath();
+		if (includeInternalMemory) {
+			f = c.getFilesDir();
+			if (f.exists() && f.canWrite()) {
+				stats = new StatFs(f.getAbsolutePath());
+				long space = (long)stats.getBlockSize() * (long)stats.getBlockCount();
+	//			long space = f.getUsableSpace();
+				if (space > mostUsableSpace) {
+					mostUsableSpace = space;
+					rtr = f.getAbsolutePath();
+				}
 			}
 		}
 

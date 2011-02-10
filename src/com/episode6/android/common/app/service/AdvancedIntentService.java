@@ -1,4 +1,4 @@
-package com.episode6.android.common.service;
+package com.episode6.android.common.app.service;
 
 import java.util.concurrent.LinkedBlockingQueue;
 

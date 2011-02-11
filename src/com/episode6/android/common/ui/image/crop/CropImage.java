@@ -448,30 +448,47 @@ public class CropImage extends MonitoredActivity {
 
 	        boolean addToGallery = (mOutputFilePath == null);
 
-	        File tmpFile = null;
+	        
         	try {
-        		if (addToGallery)
-        			tmpFile = File.createTempFile(TEMP_FILE_PREFIX, TEMP_FILE_SUFFIX, getFilesDir());
-        		else 
-        			tmpFile = new File(mOutputFilePath);
-	        	FileOutputStream outputStream = new FileOutputStream(tmpFile);
-	        	croppedImage.compress(CompressFormat.JPEG, mSaveQuality, outputStream);
-	        	outputStream.close();
+        		
+        		
+        		if (addToGallery) {
+        			returnedUri = ImageUtils.putBitmapIntoGalleryAndGetUri(CropImage.this, croppedImage, true);
+        		} else {
+        			File tmpFile = new File(mOutputFilePath);
+        			FileOutputStream outputStream = new FileOutputStream(tmpFile);
+    	        	croppedImage.compress(CompressFormat.JPEG, mSaveQuality, outputStream);
+    	        	outputStream.close();
+    	        	croppedImage.recycle();
+    	        	returnedFile = tmpFile;
+        		}
+        		
+        		
+        		
+//        		if (addToGallery)
+//        			tmpFile = File.createTempFile(TEMP_FILE_PREFIX, TEMP_FILE_SUFFIX, getFilesDir());
+//        		else 
+//        			tmpFile = new File(mOutputFilePath);
+//	        	FileOutputStream outputStream = new FileOutputStream(tmpFile);
+//	        	croppedImage.compress(CompressFormat.JPEG, mSaveQuality, outputStream);
+//	        	outputStream.close();
+//	        	
+//	        	croppedImage.recycle();
+//	        	
+//	        	if (addToGallery)
+//	        		returnedUri = ImageUtils.putImageFileIntoGalleryAndGetUri(CropImage.this, tmpFile, true);
+//	        	else 
+//	        		returnedFile = tmpFile;
 	        	
-	        	if (addToGallery)
-	        		returnedUri = ImageUtils.putImageFileIntoGalleryAndGetUri(CropImage.this, tmpFile, true);
-	        	else 
-	        		returnedFile = tmpFile;
-	        	croppedImage.recycle();
         	} catch(Exception e) {
         		e.printStackTrace();
         		try {
         			croppedImage.recycle();
         		} catch (Exception e1) {}
         	}
-        	if (addToGallery && tmpFile != null) {
-        		tmpFile.delete();
-        	}
+//        	if (addToGallery && tmpFile != null) {
+//        		tmpFile.delete();
+//        	}
 	    }
     	
     }

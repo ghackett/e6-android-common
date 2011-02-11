@@ -20,5 +20,9 @@ public abstract class EzHttpTask extends AbstractTask {
 	public void postProcess() throws Throwable {
 		processResponse(mResponse);
 	}
+	
+	public EzHttpResponse getResponse() {
+		return mResponse;
+	}
 
 }

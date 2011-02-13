@@ -82,7 +82,7 @@ public abstract class TaskExecutorService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		addTask(getTask(intent));
-		
+		safeStop();
 		return START_NOT_STICKY;
 	}
 
@@ -132,7 +132,7 @@ public abstract class TaskExecutorService extends Service {
 	
 	public TaskPoolExecutor getDefaultExecutor() {
 		if (mDefaultExecutor == null) {
-			mDefaultExecutor = new TaskPoolExecutor(2, 3, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10, true));
+			mDefaultExecutor = new TaskPoolExecutor(0, 3, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10, true));
 		}
 		return mDefaultExecutor;
 	}

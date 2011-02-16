@@ -20,15 +20,16 @@ public class ViewUtils {
 			
 			@Override
 			public void onClick(View widget) {
-				onClickListener.onClick(widget);
+//				onClickListener.onClick(widget);
 			}
 		};
 		spanString.setSpan(clickSpan, 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		
-		tv.setLinksClickable(true);
+		tv.setLinksClickable(false);
 		tv.setMovementMethod(LinkMovementMethod.getInstance());
 		tv.setBackgroundResource(selectorBgResId);
 		tv.setText(spanString);
+		tv.setOnClickListener(onClickListener);
 	}
 
 }

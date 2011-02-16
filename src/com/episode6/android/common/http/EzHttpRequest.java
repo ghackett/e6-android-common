@@ -52,8 +52,9 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	public static final int REQ_POST_STRING_ENT = 7;
 	
 	private static final String VAL_LAST_MOD_HEADER = "Last-Modified";
+	private static final String VAL_USER_AGENT_HEADER = "User-Agent";
 	
-	private static final String VAL_AUTHORIZATION = "Authorization";
+	private static final String VAL_AUTHORIZATION_HEADER = "Authorization";
 	private static final String VAL_BASIC = "Basic ";
 	
 	
@@ -279,7 +280,10 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	}
 	public void addBasicAuth(String username, String password) {
 		String auth = Base64.encodeString(username + ":" + password);
-		addHeader(VAL_AUTHORIZATION, VAL_BASIC + auth);
+		addHeader(VAL_AUTHORIZATION_HEADER, VAL_BASIC + auth);
+	}
+	public void addUserAgent(String userAgent) {
+		addHeader(VAL_USER_AGENT_HEADER, userAgent);
 	}
 
 	

@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.widget.Toast;
 
 import com.episode6.android.common.app.task.AbstractTask;
 
@@ -137,7 +138,15 @@ public abstract class TaskExecutorService extends Service {
 		return mDefaultExecutor;
 	}
 	
-	
+	public void postToast(final String message) {
+		mHandler.post(new Runnable() {
+			
+			@Override
+			public void run() {
+				Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+			}
+		});
+	}
 	
 	
 	

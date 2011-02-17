@@ -66,7 +66,7 @@ public class CropImage extends MonitoredActivity {
     public static final String EXTRA_SAVE_QUALITY = "saveQuality";
     public static final String EXTRA_OUTPUT_FILE_PATH = "outputFilePath";
     
-    private static final int DIALOG_CROPPING = 834;
+    protected static final int DIALOG_CROPPING = 834;
     
     private static final String TEMP_FILE_PREFIX = "croppedImage";
     private static final String TEMP_FILE_SUFFIX = ".jpg";

@@ -312,13 +312,18 @@ mTabHost.addTab(TAB_TAG_1, "Hello, world!", "Tab 1");
             return;
         }
 
+        
+        final EzTabHost.TabSpec spec = mTabSpecs.get(index);
+        
+        invokeOnTabChangeListener(true, spec.getTag());
+        
         // notify old tab content
         if (mCurrentTab != -1) {
             mTabSpecs.get(mCurrentTab).mContentStrategy.tabClosed();
         }
 
         mCurrentTab = index;
-        final EzTabHost.TabSpec spec = mTabSpecs.get(index);
+        
 
         // Call the tab widget's focusCurrentTab(), instead of just
         // selecting the tab.
@@ -343,7 +348,7 @@ mTabHost.addTab(TAB_TAG_1, "Hello, world!", "Tab 1");
         }
 
         //mTabContent.requestFocus(View.FOCUS_FORWARD);
-        invokeOnTabChangeListener();
+        invokeOnTabChangeListener(false, getCurrentTabTag());
     }
 
     /**
@@ -356,9 +361,12 @@ mTabHost.addTab(TAB_TAG_1, "Hello, world!", "Tab 1");
         mOnTabChangeListener = l;
     }
 
-    private void invokeOnTabChangeListener() {
+    private void invokeOnTabChangeListener(boolean pre, String tag) {
         if (mOnTabChangeListener != null) {
-            mOnTabChangeListener.onTabChanged(getCurrentTabTag());
+        	if (pre)
+        		mOnTabChangeListener.onTabWillChange(tag);
+        	else
+        		mOnTabChangeListener.onTabChanged(tag);
         }
     }
 
@@ -366,6 +374,7 @@ mTabHost.addTab(TAB_TAG_1, "Hello, world!", "Tab 1");
      * Interface definition for a callback to be invoked when tab changed
      */
     public interface OnTabChangeListener {
+    	void onTabWillChange(String tabId);
         void onTabChanged(String tabId);
     }
 

@@ -74,6 +74,7 @@ public class DataUtils {
 			closeStreams(from, to, closeInput, closeOutput);
 		} catch (Exception e) {
 			closeStreams(from, to, closeInput, closeOutput);
+			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
 	}

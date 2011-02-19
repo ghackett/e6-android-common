@@ -8,8 +8,13 @@ import android.widget.ListView;
 
 public class HandyListView extends ListView {
 	
+	public interface OnSizeChangedListener {
+		public void onSizeChanged(int w, int h, int oldw, int oldh);
+	}
+	
 	private View mEmptyListView = null;
 	private View mLoadingListView = null;
+	private OnSizeChangedListener mSizeListener = null;
 
 	public HandyListView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
@@ -61,6 +66,17 @@ public class HandyListView extends ListView {
 			setVisibility(View.GONE);
 			mLoadingListView.setVisibility(View.VISIBLE);
 		}
+	}
+	
+	public void setOnSizeChangedListener(OnSizeChangedListener listener) {
+		mSizeListener = listener;
+	}
+	
+	@Override
+	public void onSizeChanged(int w, int h, int oldw, int oldh) {
+		super.onSizeChanged(w, h, oldw, oldh);
+		if (mSizeListener != null)
+			mSizeListener.onSizeChanged(w, h, oldw, oldh);
 	}
 
 	

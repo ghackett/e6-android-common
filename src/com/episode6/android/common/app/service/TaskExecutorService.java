@@ -133,7 +133,7 @@ public abstract class TaskExecutorService extends Service {
 	
 	public TaskPoolExecutor getDefaultExecutor() {
 		if (mDefaultExecutor == null) {
-			mDefaultExecutor = new TaskPoolExecutor(0, 3, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10, true));
+			mDefaultExecutor = new TaskPoolExecutor(0, 3, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10, true), Thread.NORM_PRIORITY);
 		}
 		return mDefaultExecutor;
 	}
@@ -160,20 +160,40 @@ public abstract class TaskExecutorService extends Service {
 
 		public TaskPoolExecutor(int corePoolSize, int maximumPoolSize,
 				long keepAliveTime, TimeUnit unit,
-				BlockingQueue<Runnable> workQueue) {
-			super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, mRejectionHandler);
+				BlockingQueue<Runnable> workQueue, int threadPriority) {
+			super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, new TaskThreadFactory(threadPriority), mRejectionHandler);
 		}
 
-		public TaskPoolExecutor(int corePoolSize, int maximumPoolSize,
-				long keepAliveTime, TimeUnit unit,
-				BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory) {
-			super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
-					threadFactory, mRejectionHandler);
-		}
+//		public TaskPoolExecutor(int corePoolSize, int maximumPoolSize,
+//				long keepAliveTime, TimeUnit unit,
+//				BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, int threadPriority) {
+//			super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
+//					threadFactory, mRejectionHandler);
+//			mThreadPriority = threadPriority;
+//		}
 		
 		public void executeTask(AbstractTask task) {
 			execute(new TaskExecutionThread(task));
 		}
+		
+
+	}
+	
+	private class TaskThreadFactory implements ThreadFactory {
+		
+		private int mThreadPriority;
+		public TaskThreadFactory(int threadPriority) {
+			mThreadPriority = threadPriority;
+		}
+
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread t = new Thread(r);
+			t.setPriority(mThreadPriority);
+			t.setDaemon(false);
+			return t;
+		}
+		
 	}
 	
  

@@ -37,12 +37,12 @@ public class HandyListView extends ListView {
 
 	@Override
 	public void setAdapter(ListAdapter adapter) {
-		super.setAdapter(adapter);
 		if (mLoadingListView != null)
 			mLoadingListView.setVisibility(View.GONE);
 		setVisibility(View.VISIBLE);
-		setEmptyView(mEmptyListView);
+		super.setEmptyView(mEmptyListView);
 		mEmptyListView = null;
+		super.setAdapter(adapter);
 		
 	}
 

@@ -420,6 +420,7 @@ public class CropImage extends MonitoredActivity {
 	            // Release bitmap memory as soon as possible
 //	            mImageView.clear();
 	            mBitmap.recycle();
+	            System.gc();
 	        } else {
 	            Rect r = mCrop.getCropRect();
 
@@ -438,6 +439,7 @@ public class CropImage extends MonitoredActivity {
 	            // Release bitmap memory as soon as possible
 //	            mImageView.clear();
 	            mBitmap.recycle();
+                System.gc();
 
 	            // If the required dimension is specified, scale the image.
 	            if (mOutputX != 0 && mOutputY != 0 && mScale) {
@@ -462,6 +464,7 @@ public class CropImage extends MonitoredActivity {
     	        	croppedImage.recycle();
     	        	returnedFile = tmpFile;
         		}
+                System.gc();
         		
         		
         		

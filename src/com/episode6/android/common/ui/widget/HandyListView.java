@@ -1,8 +1,10 @@
 package com.episode6.android.common.ui.widget;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.View;
+import android.widget.HeaderViewListAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
@@ -15,6 +17,7 @@ public class HandyListView extends ListView {
 	private View mEmptyListView = null;
 	private View mLoadingListView = null;
 	private OnSizeChangedListener mSizeListener = null;
+	private int mFadingEdgeColor = -1;
 
 	public HandyListView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
@@ -78,6 +81,23 @@ public class HandyListView extends ListView {
 		if (mSizeListener != null)
 			mSizeListener.onSizeChanged(w, h, oldw, oldh);
 	}
+	
+	public ListAdapter getBaseAdapter() {
+		ListAdapter adapter = super.getAdapter();
+		if (adapter instanceof HeaderViewListAdapter) 
+			return ((HeaderViewListAdapter)adapter).getWrappedAdapter();
+		return adapter;
+	}
 
+	public void setFadingEdgeColor(int color) {
+		mFadingEdgeColor = color;
+	}
+	
+	@Override
+	public int getSolidColor() {
+		if (mFadingEdgeColor == -1)
+			return super.getSolidColor();
+		return mFadingEdgeColor;
+	}
 	
 }

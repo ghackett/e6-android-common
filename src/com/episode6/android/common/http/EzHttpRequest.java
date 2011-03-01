@@ -387,7 +387,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		try {
 			response = execute();
 		} catch (Throwable t) {
-			Log.e(TAG, "Error performing requst to url: " + getUrl());
+//			Log.e(TAG, "Error performing requst to url: " + getUrl());
 			t.printStackTrace();
 			response = generateExceptionResponse(t);
 		}
@@ -492,7 +492,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 //				Log.d("EzHttpReq", "server response = " + ezResponse.getResponseText());
 			
 		} catch (Exception e) {
-			Log.e(TAG, "Error performing requst to url: " + getUrl());
+//			Log.e(TAG, "Error performing requst to url: " + getUrl());
 			e.printStackTrace();
 			ezResponse.mSuccess = false;
 			ezResponse.mResponseCode = -1;

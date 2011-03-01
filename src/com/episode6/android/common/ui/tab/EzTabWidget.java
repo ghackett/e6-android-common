@@ -437,7 +437,7 @@ public class EzTabWidget extends LinearLayout implements OnFocusChangeListener {
         }
 
         public void onClick(View v) {
-        	Log.e("TEST", "CLICKED TAB " + mTabIndex);
+//        	Log.e("TEST", "CLICKED TAB " + mTabIndex);
             mSelectionChangedListener.onTabSelectionChanged(mTabIndex, true);
         }
     }

@@ -4,11 +4,11 @@ import java.lang.ref.SoftReference;
 
 import android.graphics.Bitmap;
 
-public class BitmapReference extends SoftReference<Bitmap> {
+public class BitmapSoftReference extends SoftReference<Bitmap> {
 	@SuppressWarnings("unused")
 	private static final String TAG = "BitmapReference";
 
-	public BitmapReference(Bitmap referent) {
+	public BitmapSoftReference(Bitmap referent) {
 		super(referent);
 	}
 

@@ -11,7 +11,7 @@ import android.widget.ListView;
 public class HandyListView extends ListView {
 	
 	public interface OnSizeChangedListener {
-		public void onSizeChanged(int w, int h, int oldw, int oldh);
+		public void onSizeChanged(HandyListView listView, int w, int h, int oldw, int oldh);
 	}
 	
 	private View mEmptyListView = null;
@@ -79,7 +79,7 @@ public class HandyListView extends ListView {
 	public void onSizeChanged(int w, int h, int oldw, int oldh) {
 		super.onSizeChanged(w, h, oldw, oldh);
 		if (mSizeListener != null)
-			mSizeListener.onSizeChanged(w, h, oldw, oldh);
+			mSizeListener.onSizeChanged(this, w, h, oldw, oldh);
 	}
 	
 	public ListAdapter getBaseAdapter() {

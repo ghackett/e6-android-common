@@ -1,7 +1,6 @@
 package com.episode6.android.common.ui.widget;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.HeaderViewListAdapter;
@@ -18,6 +17,7 @@ public class HandyListView extends ListView {
 	private View mLoadingListView = null;
 	private OnSizeChangedListener mSizeListener = null;
 	private int mFadingEdgeColor = -1;
+	private int mListViewHiddenValue = View.GONE;
 
 	public HandyListView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
@@ -36,6 +36,15 @@ public class HandyListView extends ListView {
 	
 	private void initHandyListView() {
 		
+	}
+	
+	/**
+	 * accepts View.INVISIBLE or View.GONE, default is View.GONE
+	 * might not work with empty view
+	 * @param hiddenValue
+	 */
+	public void setListViewHiddenValue(int hiddenValue) {
+		mListViewHiddenValue = hiddenValue;
 	}
 
 	@Override
@@ -66,7 +75,7 @@ public class HandyListView extends ListView {
 	public void setLoadingListView(View loadingView) {
 		mLoadingListView = loadingView;
 		if (mLoadingListView != null) {
-			setVisibility(View.GONE);
+			setVisibility(mListViewHiddenValue);
 			mLoadingListView.setVisibility(View.VISIBLE);
 		}
 	}

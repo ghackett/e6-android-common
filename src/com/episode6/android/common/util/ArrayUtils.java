@@ -9,5 +9,9 @@ public class ArrayUtils {
 		}
 		return -1;
 	}
+	
+	public static boolean arrayContainsValue(Object[] array, Object value) {
+		return findValueInArray(array, value) != -1;
+	}
 
 }

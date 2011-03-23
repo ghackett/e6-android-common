@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="simple_seg_bg_off">#ffffff</color>
+  <color name="simple_seg_bg_on">#fab63d</color>
+  <color name="simple_seg_bg_hi">#f2873b</color>
+
+</resources>

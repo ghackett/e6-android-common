@@ -20,29 +20,32 @@ package com.episode6.android.common.ui.image.crop;
 // data to caller. Removed saving to file, MediaManager, unneeded options, etc.
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -71,7 +74,7 @@ public class CropImage extends MonitoredActivity {
     private static final String TEMP_FILE_PREFIX = "croppedImage";
     private static final String TEMP_FILE_SUFFIX = ".jpg";
 
-    // private static final String TAG = "CropImage";
+     private static final String TAG = CropImage.class.getSimpleName();
 
     private static final boolean RECYCLE_INPUT = true;
 
@@ -94,6 +97,10 @@ public class CropImage extends MonitoredActivity {
 
     private Bitmap mBitmap;
     HighlightView mCrop;
+    
+    private Uri originalBitmapUri;
+    private static final int MAX_WIDTH = 400;
+    private static final int MAX_HEIGHT = 400;
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -127,9 +134,9 @@ public class CropImage extends MonitoredActivity {
         if (mBitmap == null) {
             InputStream is = null;
             try {
-                Uri target = intent.getData();
+            	originalBitmapUri = intent.getData();
                 ContentResolver cr = getContentResolver();
-                is = cr.openInputStream(target);
+                is = cr.openInputStream(originalBitmapUri);
                 mBitmap = BitmapFactory.decodeStream(is);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -332,6 +339,7 @@ public class CropImage extends MonitoredActivity {
     };
 
     private void onSaveClicked() {
+    	
         if (mCrop == null) {
             return;
         }
@@ -354,6 +362,9 @@ public class CropImage extends MonitoredActivity {
 			showDialog(DIALOG_CROPPING);
 			mImageView.clear();
 			mImageView.mHighlightViews.clear();
+			mBitmap.recycle();
+			mBitmap = null;
+			System.gc();
 			super.onPreExecute();
 		}
 		
@@ -385,13 +396,40 @@ public class CropImage extends MonitoredActivity {
 			super.onPostExecute(result);
 		}
 
-	    private void doCropAndSave() {
-	        // TODO this code needs to change to use the decode/crop/encode single
-	        // step api so that we don't require that the whole (possibly large)
-	        // bitmap doesn't have to be read into memory
+	    private void doCropAndSave(){	    	
 
-
+	    	InputStream input = null;
 	        Bitmap croppedImage;
+	    	int load_scale = 1;
+	    	
+	    	
+            try {
+
+                ContentResolver cr = getContentResolver();
+                input = cr.openInputStream(originalBitmapUri);
+                
+                //calc scale to reduce by. scale must be power of 2 (1,2,4,8,16...)
+                load_scale = calculateLoadScale(input);
+
+	        	//Now load image with precalculated scale
+	        	BitmapFactory.Options option_to_load = new BitmapFactory.Options();
+	        	option_to_load.inSampleSize = load_scale;
+	        	((FileInputStream)input).getChannel().position(0); // reset input stream to read again
+	        	mBitmap = BitmapFactory.decodeStream(input, null, option_to_load);
+
+		    	Log.d(TAG, "bitmap HxW: " + mBitmap.getHeight() + "x"+mBitmap.getWidth());
+
+            } catch (IOException e) {
+            	//TODO: check to see that the returning activity handles and error message
+            	
+            	setResult(RESULT_CANCELED);
+            	finish();
+            	try{if(input!=null){input.close();}}catch(Exception ignore){}
+            } 
+            
+          
+           
+
 
 	        // If the output is required to a specific size, create an new image
 	        // with the cropped image in the center and the extra space filled.
@@ -416,19 +454,19 @@ public class CropImage extends MonitoredActivity {
 
 	            // Draw the cropped bitmap in the center
 	            canvas.drawBitmap(mBitmap, srcRect, dstRect, null);
+	            
 
-	            // Release bitmap memory as soon as possible
-//	            mImageView.clear();
 	            mBitmap.recycle();
-	            System.gc();
+                System.gc();
 	        } else {
-	            Rect r = mCrop.getCropRect();
+	        	
 
+	            Rect r = mCrop.getCropRect();
+	            r.set(r.left/load_scale, r.top/load_scale, r.right/load_scale, r.bottom/load_scale);
 	            int width = r.width();
 	            int height = r.height();
 
-	            // If we are circle cropping, we want alpha channel, which is the
-	            // third param here.
+
 	            croppedImage = Bitmap.createBitmap(width, height,
 	                    Bitmap.Config.RGB_565);
 
@@ -436,8 +474,6 @@ public class CropImage extends MonitoredActivity {
 	            Rect dstRect = new Rect(0, 0, width, height);
 	            canvas.drawBitmap(mBitmap, r, dstRect, null);
 
-	            // Release bitmap memory as soon as possible
-//	            mImageView.clear();
 	            mBitmap.recycle();
                 System.gc();
 
@@ -448,6 +484,9 @@ public class CropImage extends MonitoredActivity {
 	            }
 	        }
 
+	        
+	        try{if(input!=null){input.close();}}catch(Exception ignore){}
+	        
 	        boolean addToGallery = (mOutputFilePath == null);
 
 	        
@@ -493,6 +532,23 @@ public class CropImage extends MonitoredActivity {
 //        		tmpFile.delete();
 //        	}
 	    }
+
+		private int calculateLoadScale(InputStream input) {
+			BitmapFactory.Options options_to_get_size = new BitmapFactory.Options();
+			options_to_get_size.inJustDecodeBounds = true;
+			BitmapFactory.decodeStream(input, null, options_to_get_size);
+			int load_scale = 1; // load 100% sized image
+			int width_tmp=options_to_get_size.outWidth;
+			int height_tmp=options_to_get_size.outHeight;
+
+			while(width_tmp/2>MAX_WIDTH && height_tmp/2>MAX_HEIGHT){
+				width_tmp/=2;//load half sized image
+				height_tmp/=2;
+				load_scale*=2;
+			}
+			Log.d(TAG,"load inSampleSize: "+ load_scale);
+			return load_scale;
+		}
     	
     }
     

@@ -59,6 +59,10 @@ import com.episode6.android.common.util.ImageUtils;
  */
 public class CropImage extends MonitoredActivity {
 	
+
+	public static final int ACTIVITY_RESULT_CROP_ERROR = 1752925335;
+	public static final int ACTIVITY_RESULT_IMAGE_LOAD_ERROR = 1752817635;
+	
     public static final String EXTRA_BITMAP_DATA = "data";
     public static final String EXTRA_ASPECT_X = "aspectX";
     public static final String EXTRA_ASPECT_Y = "aspectY";
@@ -71,8 +75,8 @@ public class CropImage extends MonitoredActivity {
     
     protected static final int DIALOG_CROPPING = 834;
     
-    private static final String TEMP_FILE_PREFIX = "croppedImage";
-    private static final String TEMP_FILE_SUFFIX = ".jpg";
+//    private static final String TEMP_FILE_PREFIX = "croppedImage";
+//    private static final String TEMP_FILE_SUFFIX = ".jpg";
 
      private static final String TAG = CropImage.class.getSimpleName();
 
@@ -106,6 +110,8 @@ public class CropImage extends MonitoredActivity {
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
 
+        // Make UI fullscreen.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.cropimage);
 
@@ -114,6 +120,11 @@ public class CropImage extends MonitoredActivity {
 
         // MenuHelper.showStorageToast(this);
 
+    }
+    
+    public void onStart(){
+    	super.onStart();
+    	
         Intent intent = getIntent();
         Bundle extras = intent.getExtras();
         
@@ -151,17 +162,16 @@ public class CropImage extends MonitoredActivity {
         }
 
         if (mBitmap == null) {
+        	setResult(ACTIVITY_RESULT_IMAGE_LOAD_ERROR);
             finish();
             return;
         }
 
-        // Make UI fullscreen.
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         findViewById(R.id.discard).setOnClickListener(
                 new View.OnClickListener() {
                     public void onClick(View v) {
-                        setResult(RESULT_CANCELED);
+                        setResult(Activity.RESULT_CANCELED);
                         finish();
                     }
                 });
@@ -173,6 +183,14 @@ public class CropImage extends MonitoredActivity {
         });
 
         startFaceDetection();
+    }
+    
+    public void onStop(){
+    	super.onStop();
+    	if(mBitmap!=null){
+    		mBitmap.recycle();
+    	}
+    	
     }
     
     
@@ -383,7 +401,7 @@ public class CropImage extends MonitoredActivity {
 			}
 			
 	        if (returnedUri == null) {
-	        	setResult(RESULT_CANCELED);
+	        	setResult(ACTIVITY_RESULT_CROP_ERROR);
 	        } else {
 	        	Intent i = new Intent();
 	        	if (returnedUri != null)
@@ -397,7 +415,6 @@ public class CropImage extends MonitoredActivity {
 		}
 
 	    private void doCropAndSave(){	    	
-
 	    	InputStream input = null;
 	        Bitmap croppedImage;
 	    	int load_scale = 1;
@@ -422,7 +439,7 @@ public class CropImage extends MonitoredActivity {
             } catch (IOException e) {
             	//TODO: check to see that the returning activity handles and error message
             	
-            	setResult(RESULT_CANCELED);
+            	setResult(ACTIVITY_RESULT_CROP_ERROR);
             	finish();
             	try{if(input!=null){input.close();}}catch(Exception ignore){}
             } 

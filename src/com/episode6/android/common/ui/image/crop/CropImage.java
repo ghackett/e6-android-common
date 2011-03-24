@@ -81,6 +81,8 @@ public class CropImage extends MonitoredActivity {
      private static final String TAG = CropImage.class.getSimpleName();
 
     private static final boolean RECYCLE_INPUT = true;
+    
+    private boolean mIsHighlightViewOnScreen = false;
 
     private int mAspectX, mAspectY;
     private final Handler mHandler = new Handler();
@@ -214,6 +216,7 @@ public class CropImage extends MonitoredActivity {
             return;
         }
 
+        
         mImageView.setImageBitmapResetBase(mBitmap, true);
 
         startBackgroundJob(this, null, getResources().getString(
@@ -344,7 +347,9 @@ public class CropImage extends MonitoredActivity {
             mScale = 1.0F / mScale;
             mHandler.post(new Runnable() {
                 public void run() {
-                    makeDefault();
+                	if (mImageView.mHighlightViews.size() < 1) {
+                		makeDefault();
+                	}
 
                     mImageView.invalidate();
                     if (mImageView.mHighlightViews.size() == 1) {

@@ -34,7 +34,6 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.os.Handler;
-import android.util.Log;
 
 import com.episode6.android.common.util.Base64;
 import com.episode6.android.common.util.DataUtils;
@@ -151,7 +150,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 	private int mCurrentFile;
 	private boolean mUploadingFiles;
 	
-	private EzHttpRequest(Context c, String url, int reqType, boolean isRaw, int requestCode) {
+	protected EzHttpRequest(Context c, String url, int reqType, boolean isRaw, int requestCode) {
 		mUrl = url;
 		mReqType = reqType;
 		mIsRaw = isRaw;
@@ -463,6 +462,8 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 					message.addHeader(headerName, mHeaders.get(headerName));
 				}
 			}
+			
+			processMessage(message);
 			
 			HttpClient client = new DefaultHttpClient(connParams);
 			HttpResponse response = client.execute(message);
@@ -833,6 +834,10 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 				}
 			}
 		}
+	}
+	
+	protected void processMessage(HttpUriRequest message) throws Exception{
+		//overridable method
 	}
 	
 

@@ -13,5 +13,17 @@ public class ArrayUtils {
 	public static boolean arrayContainsValue(Object[] array, Object value) {
 		return findValueInArray(array, value) != -1;
 	}
+	
+	public static String[] copyOf(String[] original, int newLength) {
+		if (original == null) {
+			return new String[0];
+		}
+		
+		String[] rtr = new String[Math.min(newLength, original.length)];
+		for (int i = 0; i<rtr.length; i++) {
+			rtr[i] = original[i];
+		}
+		return rtr;
+	}
 
 }

@@ -40,7 +40,7 @@ import com.episode6.android.common.util.DataUtils;
 import com.episode6.android.common.util.ExceptionUtils;
 
 public class EzHttpRequest implements DataUtils.ProgressListener {
-	private static final String TAG = "EzHttpRequest";
+//	private static final String TAG = "EzHttpRequest";
 	
 	public static final int REQ_GET = 1;
 	public static final int REQ_PUT = 2;

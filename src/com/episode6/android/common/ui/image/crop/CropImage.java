@@ -34,12 +34,12 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -82,7 +82,7 @@ public class CropImage extends MonitoredActivity {
 
     private static final boolean RECYCLE_INPUT = true;
     
-    private boolean mIsHighlightViewOnScreen = false;
+//    private boolean mIsHighlightViewOnScreen = false;
 
     private int mAspectX, mAspectY;
     private final Handler mHandler = new Handler();

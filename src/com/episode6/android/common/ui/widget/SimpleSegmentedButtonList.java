@@ -4,7 +4,6 @@ package com.episode6.android.common.ui.widget;
 
 import java.util.ArrayList;
 
-import android.R.color;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;

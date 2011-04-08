@@ -1,13 +1,10 @@
 package com.episode6.android.common.http;
 
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import android.os.Handler;
-
-import com.episode6.android.common.util.concurrent.LinkedBlockingStack;
 
 public class EzHttpThreadExecutor extends ThreadPoolExecutor {
 //	private static EzHttpThreadExecutor QUEUE_EXECUTOR = null;

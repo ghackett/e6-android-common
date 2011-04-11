@@ -126,24 +126,48 @@ public class HandyPagedView extends FrameLayout {
 	}
 	
 	private void pageChanged() {
+		if (mScrollX == getWidth()) {
+			//stayed on the same page, no need to continue
+			return;
+		}
+		
+		for (int i = 0; i<3; i++) {
+			mContainerViews.get(i).removeAllViews();
+		}
+		
+		
 		if (mScrollX == 0) {
 			//go one back
 			mCurrentPage--;
-		} else if (mScrollX == getWidth()) {
-			//same page
-			return;
+			
+			if (mCurrentPage == -1) {
+				mCurrentPage = mAdapter.getCount()-1;
+			}
+			
+			recycleView(mVisibleViews[2]);
+			mVisibleViews[2] = mVisibleViews[1];
+			mVisibleViews[1] = mVisibleViews[0];
+			mVisibleViews[0] = getAdapterView(mCurrentPage-1);
+			
 		} else if (mScrollX == getWidth()*2) {
 			//next page
 			mCurrentPage++;
+			
+			if (mCurrentPage == mAdapter.getCount()) {
+				mCurrentPage = 0;
+			}
+			
+			recycleView(mVisibleViews[0]);
+			mVisibleViews[0] = mVisibleViews[1];
+			mVisibleViews[1] = mVisibleViews[2];
+			mVisibleViews[2] = getAdapterView(mCurrentPage+1);
 		}
 		
-		if (mCurrentPage == -1) {
-			mCurrentPage = mAdapter.getCount()-1;
-		} else if (mCurrentPage == mAdapter.getCount()) {
-			mCurrentPage = 0;
-		}
 		
-		updatePageLayout();
+		for (int i = 0; i<3; i++) {
+			mContainerViews.get(i).addView(mVisibleViews[i].view);
+		}
+		scrollTo(getWidth(), true);
 	}
 	
 	
@@ -442,7 +466,7 @@ public class HandyPagedView extends FrameLayout {
 			} else {
 				if (info != null && container.getChildAt(0) == info.view) {
 					container.removeAllViews();
-					mRecycledViews.get(info.type).add(info.view);
+					recycleView(info);
 				} else {
 					container.removeAllViews();
 				}
@@ -451,11 +475,30 @@ public class HandyPagedView extends FrameLayout {
 		}
 //		super.removeAllViews();
 	}
+	
+	private void recycleView(AdapterViewInfo viewInfo) {
+		if (viewInfo != null) {
+			mRecycledViews.get(viewInfo.type).add(viewInfo.view);
+		}
+	}
 
 	
 	private AdapterViewInfo getAdapterView(int position) {
 		if (mAdapter == null)
 			return null;
+		if (position < 0) {
+			if (mInfiniteLoop) {
+				return getAdapterView(mAdapter.getCount()-1);
+			} else {
+				return null;
+			}
+		} else if (position >= mAdapter.getCount()) {
+			if (mInfiniteLoop) {
+				return getAdapterView(0);
+			} else {
+				return null;
+			}
+		}
 		int viewType = mAdapter.getItemViewType(position);
 		ArrayList<View> recycleArray = mRecycledViews.get(viewType);
 		View v = null;

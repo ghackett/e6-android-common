@@ -8,6 +8,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -39,6 +40,7 @@ public class HandyPagedView extends FrameLayout {
 	private VelocityTracker mVelocityTracker;
 	private boolean mAutoScroll;
 	private long mAutoScrollInterval;
+	private int mAutoScrollDuration;
 	private boolean mInfiniteLoop;
 	private boolean mStopAutoScrollingOnTouch;
 	
@@ -122,6 +124,7 @@ public class HandyPagedView extends FrameLayout {
 				position++;
 			}
 			scrollTo(pageWidth, true);
+//			Log.e(TAG, "Page Layout updated - w: "+ pageWidth + ", h: " + pageHeight);
 		}
 	}
 	
@@ -177,9 +180,16 @@ public class HandyPagedView extends FrameLayout {
 		return mHandler;
 	}
 
-	public void turnOnAutoScroll(long autoscrollInterval, boolean stopOnTouch) {
+	/**
+	 * 
+	 * @param autoscrollInterval - amount of time to wait before scrolling to next page
+	 * @param autoscrollDuration - duration for scroller (amount of time it takes to scroll from one view to the next)
+	 * @param stopOnTouch - should autoscrolling be stopped when the user touches the view
+	 */
+	public void turnOnAutoScroll(long autoscrollInterval, int autoscrollDuration, boolean stopOnTouch) {
 		mAutoScroll = true;
 		mAutoScrollInterval = autoscrollInterval;
+		mAutoScrollDuration = autoscrollDuration;
 		mStopAutoScrollingOnTouch = stopOnTouch;
 		getHandler().postDelayed(mAutoScrollRunnable, mAutoScrollInterval);
 	}
@@ -517,7 +527,7 @@ public class HandyPagedView extends FrameLayout {
 		public void run() {
 			if (mAdapter != null && mAutoScroll) {
 				if ((!mIsBeingDragged) && (!mIsBeingScrolled) && (mCurrentPage < mAdapter.getCount()-1 || mInfiniteLoop)) {
-					smoothScrollTo(getWidth()*2, (int)mAutoScrollInterval/2);
+					smoothScrollTo(getWidth()*2, mAutoScrollDuration);
 				}
 				getHandler().postDelayed(mAutoScrollRunnable, mAutoScrollInterval);
 				

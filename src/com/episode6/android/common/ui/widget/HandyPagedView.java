@@ -8,7 +8,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.os.Handler;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -22,7 +21,8 @@ import android.widget.Scroller;
  * IMPORTANT: if you turn autoscrolling on, remember to turn it off in your activity's onPause
  */
 public class HandyPagedView extends FrameLayout {
-	private static final String TAG = "HandyPagedView";
+	
+//	private static final String TAG = "HandyPagedView";
 	
 	private final Handler mHandler = new Handler();
 	

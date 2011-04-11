@@ -1,11 +1,14 @@
 package com.episode6.android.common.ui.widget;
 
+//com.episode6.android.common.ui.widget.HandyPagedView
+
 import java.util.ArrayList;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.AdapterView;
@@ -29,6 +32,8 @@ public class HandyPagedView extends FrameLayout {
 	private int mMaxVelocity;
 	private boolean mIsBeingDragged;
 	private boolean mIsBeingScrolled;
+	private float mLastMotionX;
+	private VelocityTracker mVelocityTracker;
 	
 	private int mScrollX;
 
@@ -52,6 +57,7 @@ public class HandyPagedView extends FrameLayout {
 		mScrollX = 0;
 		mIsBeingDragged = false;
 		mIsBeingScrolled = false;
+		mVelocityTracker = null;
 		
 		mInnerView = new LinearLayout(getContext());
 		mInnerView.setOrientation(LinearLayout.HORIZONTAL);
@@ -104,7 +110,21 @@ public class HandyPagedView extends FrameLayout {
 				
 				position++;
 			}
+			scrollTo(pageWidth, true);
 		}
+	}
+	
+	private void pageChanged() {
+		if (mScrollX == 0) {
+			//go one back
+			mCurrentPage--;
+		} else if (mScrollX == getWidth()) {
+			//same page
+		} else if (mScrollX == getWidth()*2) {
+			//next page
+			mCurrentPage++;
+		}
+		updatePageLayout();
 	}
 	
 	public void setParentScrollView(StoppableScrollView parentScrollView) {
@@ -112,9 +132,46 @@ public class HandyPagedView extends FrameLayout {
 	}
 	
 	public void scrollTo(int scrollX, boolean invalidate) {
+		if (scrollX < 0) {
+			scrollTo(0, invalidate);
+			return;
+		}
+		if (scrollX > getWidth()*2) {
+			scrollTo(getWidth()*2, invalidate);
+			return;
+		}
+		if (scrollX < getWidth() && !canScrollBack()) {
+			scrollTo(getWidth(), invalidate);
+			return;
+		}
+		if (scrollX > getWidth() && !canScrollForward()) {
+			scrollTo(getWidth(), invalidate);
+			return;
+		}
+		mIsBeingScrolled = true;
 		mScrollX = scrollX;
 		if (invalidate)
 			invalidate();
+	}
+	
+	public void scrollBy(int dx, boolean invalidate) {
+		scrollTo(mScrollX+dx, invalidate);
+	}
+	
+	public void smoothScrollTo(int x) {
+		if (!mScroller.isFinished()) {
+			mScroller.abortAnimation();
+		}
+		mScroller.startScroll(mScrollX, 0, x - mScrollX, 0);
+		invalidate();
+	}
+	
+	public void fling(int initVelocity) {
+		if (!mScroller.isFinished()) {
+			mScroller.abortAnimation();
+		}
+		mScroller.fling(mScrollX, 0, initVelocity, 0, -getWidth(), getWidth()*3, 0, 0);
+		invalidate();
 	}
 	
 	public void setAdapter(ListAdapter adapter) {
@@ -128,6 +185,10 @@ public class HandyPagedView extends FrameLayout {
 			}
 		}
 		updatePageLayout();
+	}
+	
+	public ListAdapter getAdapter() {
+		return mAdapter;
 	}
 	
 	
@@ -155,27 +216,154 @@ public class HandyPagedView extends FrameLayout {
 		return mAdapter != null && mCurrentPage < mAdapter.getCount()-1;
 	}
 	
+	private void setParentScrollingAllowed(boolean allowed) {
+		if (mParentScrollview != null) {
+			if (allowed)
+				mParentScrollview.allowScrolling();
+			else 
+				mParentScrollview.stopScrolling();
+		}
+	}
+	
 
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent ev) {
-		// TODO Auto-generated method stub
-		return super.onInterceptTouchEvent(ev);
+		final int action = ev.getAction();
+		if (action == MotionEvent.ACTION_MOVE && mIsBeingDragged) {
+			return true;
+		}
+		
+		switch(action & MotionEvent.ACTION_MASK) {
+		
+		case MotionEvent.ACTION_MOVE: {
+			final float x = ev.getX();
+			final int dx = (int)Math.abs(x - mLastMotionX);
+			if (dx > mTouchSlop) {
+				mIsBeingDragged = true;
+				mLastMotionX = x;
+				setParentScrollingAllowed(false);
+			}
+			break;
+		}
+		
+		case MotionEvent.ACTION_DOWN: {
+			final float x = ev.getX();
+			mLastMotionX = x;
+			mIsBeingDragged = !mScroller.isFinished();
+			break;
+		}
+		
+		case MotionEvent.ACTION_CANCEL:
+		case MotionEvent.ACTION_UP:
+			mIsBeingDragged = false;
+			setParentScrollingAllowed(true);
+			break;
+		}
+		
+		return mIsBeingDragged;
+
 	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		// TODO Auto-generated method stub
-		return super.onTouchEvent(event);
+		if (mVelocityTracker == null) {
+			mVelocityTracker = VelocityTracker.obtain();
+		}
+		mVelocityTracker.addMovement(event);
+		
+		final int action = event.getAction();
+		
+		switch (action & MotionEvent.ACTION_MASK) {
+	        case MotionEvent.ACTION_DOWN: {
+	            final float x = event.getX();
+	            mIsBeingDragged = true;
+	            if (!mScroller.isFinished()) {
+	                mScroller.abortAnimation();
+	            }
+	            mLastMotionX = x;
+	            break;
+	        }
+	        
+	        case MotionEvent.ACTION_MOVE: {
+	        	final float x = event.getX();
+	        	final int deltaX = (int) (mLastMotionX - x);
+	        	mLastMotionX = x;
+	        	scrollBy(deltaX, true);
+	        	break;
+	        }
+	        
+	        case MotionEvent.ACTION_CANCEL:
+	        case MotionEvent.ACTION_UP: {
+	        	final VelocityTracker velocityTracker = mVelocityTracker;
+	            velocityTracker.computeCurrentVelocity(1000, mMaxVelocity);
+	            
+	            int initialVelocity = (int) velocityTracker.getXVelocity();
+	            
+	            mIsBeingDragged = false;
+	            if (Math.abs(initialVelocity) > mMinVelocity) {
+	            	fling(-initialVelocity);
+	            } else {
+	            	finishScroll();
+	            }
+	            
+	            
+	            if (mVelocityTracker != null) {
+	            	mVelocityTracker.recycle();
+	            	mVelocityTracker = null;
+	            }
+	        	
+	            setParentScrollingAllowed(true);
+	            
+	        	break;
+	        }
+		}
+		return true;
+
+	}
+	
+	private void finishScroll() {
+		if (mIsBeingScrolled && !mIsBeingDragged) {
+			mIsBeingScrolled = false;
+			
+			if (mScrollX % getWidth() == 0) {
+				pageChanged();
+				return;
+			}
+			
+			if (mScrollX < getWidth()/2) {
+				smoothScrollTo(0);
+			} else if (mScrollX < getWidth()*1.5) {
+				smoothScrollTo(getWidth());
+			} else {
+				smoothScrollTo(getWidth()*2);
+			}
+		}
 	}
 
 	
 	@Override
 	public void computeScroll() {
 		if (mScroller.computeScrollOffset()) {
-			mIsBeingScrolled = true;
-		} else if (mIsBeingScrolled) {
-			mIsBeingScrolled = false;
+			boolean finishScroll = false;
+			int curX = mScroller.getCurrX();
+			if (curX > getWidth()*2) {
+				curX = getWidth()*2;
+				finishScroll = true;
+			}
+			if (curX < 0) {
+				curX = 0;
+				finishScroll = true;
+			}
 			
+			scrollTo(curX, false);
+			postInvalidate();
+			
+			if (finishScroll) {
+				mScroller.abortAnimation();
+				finishScroll();
+			}
+		} else if (mIsBeingScrolled) {
+			finishScroll();
 		}
 	}
 
@@ -194,7 +382,7 @@ public class HandyPagedView extends FrameLayout {
 			if (mAdapter == null) {
 				container.removeAllViews();
 			} else {
-				if (container.getChildAt(0) == info.view) {
+				if (info != null && container.getChildAt(0) == info.view) {
 					container.removeAllViews();
 					mRecycledViews.get(info.type).add(info.view);
 				} else {

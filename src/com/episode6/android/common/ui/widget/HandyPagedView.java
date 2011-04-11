@@ -18,6 +18,9 @@ import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.Scroller;
 
+/*
+ * IMPORTANT: if you turn autoscrolling on, remember to turn it off in your activity's onPause
+ */
 public class HandyPagedView extends FrameLayout {
 	private static final String TAG = "HandyPagedView";
 	

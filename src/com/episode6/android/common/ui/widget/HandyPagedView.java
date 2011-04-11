@@ -6,18 +6,21 @@ import java.util.ArrayList;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.Scroller;
 
 public class HandyPagedView extends FrameLayout {
+	private static final String TAG = "HandyPagedView";
+	
+	private final Handler mHandler = new Handler();
 	
 	private StoppableScrollView mParentScrollview;
 	private LinearLayout mInnerView;
@@ -34,6 +37,10 @@ public class HandyPagedView extends FrameLayout {
 	private boolean mIsBeingScrolled;
 	private float mLastMotionX;
 	private VelocityTracker mVelocityTracker;
+	private boolean mAutoScroll;
+	private long mAutoScrollInterval;
+	private boolean mInfiniteLoop;
+	private boolean mStopAutoScrollingOnTouch;
 	
 	private int mScrollX;
 
@@ -58,6 +65,10 @@ public class HandyPagedView extends FrameLayout {
 		mIsBeingDragged = false;
 		mIsBeingScrolled = false;
 		mVelocityTracker = null;
+		mAutoScroll = false;
+		mAutoScrollInterval = 400;
+		mInfiniteLoop = false;
+		mStopAutoScrollingOnTouch = false;
 		
 		mInnerView = new LinearLayout(getContext());
 		mInnerView.setOrientation(LinearLayout.HORIZONTAL);
@@ -78,6 +89,7 @@ public class HandyPagedView extends FrameLayout {
 		
 	}
 	
+	
 	private void updatePageLayout() {
 		removeAllViews();
 		if (mAdapter != null && getWidth() > 0) {
@@ -91,17 +103,16 @@ public class HandyPagedView extends FrameLayout {
 			int startIndex = 0;
 			int startPosition = 0;
 			
-			if (mCurrentPage == 0) {
-				startIndex = 1;
-			} else {
-				startPosition = mCurrentPage - 1;
-			}
+			startPosition = mCurrentPage - 1;
 			
+			if (startPosition == -1) {
+				startPosition = mAdapter.getCount()-1;
+			}
 			int position = startPosition;
 			for (int i = startIndex; i<3; i++) {
 				
 				if (position >= mAdapter.getCount())
-					break;
+					position = 0;
 				
 				AdapterViewInfo info = getAdapterView(position);
 				info.view.setLayoutParams(new FrameLayout.LayoutParams(pageWidth, pageHeight));
@@ -120,11 +131,42 @@ public class HandyPagedView extends FrameLayout {
 			mCurrentPage--;
 		} else if (mScrollX == getWidth()) {
 			//same page
+			return;
 		} else if (mScrollX == getWidth()*2) {
 			//next page
 			mCurrentPage++;
 		}
+		
+		if (mCurrentPage == -1) {
+			mCurrentPage = mAdapter.getCount()-1;
+		} else if (mCurrentPage == mAdapter.getCount()) {
+			mCurrentPage = 0;
+		}
+		
 		updatePageLayout();
+	}
+	
+	
+	
+	@Override
+	public Handler getHandler() {
+		return mHandler;
+	}
+
+	public void turnOnAutoScroll(long autoscrollInterval, boolean stopOnTouch) {
+		mAutoScroll = true;
+		mAutoScrollInterval = autoscrollInterval;
+		mStopAutoScrollingOnTouch = stopOnTouch;
+		getHandler().postDelayed(mAutoScrollRunnable, mAutoScrollInterval);
+	}
+	
+	public void turnOffAutoScroll() {
+		mAutoScroll = false;
+		getHandler().removeCallbacks(mAutoScrollRunnable);
+	}
+	
+	public void setInfiniteLoopMode(boolean infLoop) {
+		mInfiniteLoop = infLoop;
 	}
 	
 	public void setParentScrollView(StoppableScrollView parentScrollView) {
@@ -148,10 +190,12 @@ public class HandyPagedView extends FrameLayout {
 			scrollTo(getWidth(), invalidate);
 			return;
 		}
-		mIsBeingScrolled = true;
+		
 		mScrollX = scrollX;
-		if (invalidate)
+		if (invalidate) {
+//			mIsBeingScrolled = true;
 			invalidate();
+		}
 	}
 	
 	public void scrollBy(int dx, boolean invalidate) {
@@ -184,6 +228,7 @@ public class HandyPagedView extends FrameLayout {
 				mRecycledViews.add(new ArrayList<View>());
 			}
 		}
+		mCurrentPage = 0;
 		updatePageLayout();
 	}
 	
@@ -209,11 +254,11 @@ public class HandyPagedView extends FrameLayout {
 	}
 
 	public boolean canScrollBack() {
-		return mAdapter != null && mCurrentPage > 0;
+		return mAdapter != null && (mCurrentPage > 0 || mInfiniteLoop);
 	}
 	
 	public boolean canScrollForward() {
-		return mAdapter != null && mCurrentPage < mAdapter.getCount()-1;
+		return mAdapter != null && (mCurrentPage < mAdapter.getCount()-1 || mInfiniteLoop);
 	}
 	
 	private void setParentScrollingAllowed(boolean allowed) {
@@ -271,6 +316,10 @@ public class HandyPagedView extends FrameLayout {
 		}
 		mVelocityTracker.addMovement(event);
 		
+		if (mAutoScroll && mStopAutoScrollingOnTouch) {
+			turnOffAutoScroll();
+		}
+		
 		final int action = event.getAction();
 		
 		switch (action & MotionEvent.ACTION_MASK) {
@@ -322,7 +371,7 @@ public class HandyPagedView extends FrameLayout {
 	}
 	
 	private void finishScroll() {
-		if (mIsBeingScrolled && !mIsBeingDragged) {
+		if (!mIsBeingDragged) {
 			mIsBeingScrolled = false;
 			
 			if (mScrollX % getWidth() == 0) {
@@ -344,6 +393,7 @@ public class HandyPagedView extends FrameLayout {
 	@Override
 	public void computeScroll() {
 		if (mScroller.computeScrollOffset()) {
+			mIsBeingScrolled = true;
 			boolean finishScroll = false;
 			int curX = mScroller.getCurrX();
 			if (curX > getWidth()*2) {
@@ -410,6 +460,19 @@ public class HandyPagedView extends FrameLayout {
 		return info;
 	}
 
+	private Runnable mAutoScrollRunnable = new Runnable() {
+		
+		@Override
+		public void run() {
+			if (mAdapter != null && mAutoScroll) {
+				if ((!mIsBeingDragged) && (!mIsBeingScrolled) && (mCurrentPage < mAdapter.getCount()-1 || mInfiniteLoop)) {
+					smoothScrollTo(getWidth()*2);
+				}
+				getHandler().postDelayed(mAutoScrollRunnable, mAutoScrollInterval);
+				
+			}
+		}
+	};
 
 	private class AdapterViewInfo {
 		public int type;
@@ -419,6 +482,8 @@ public class HandyPagedView extends FrameLayout {
 			this.view = v;
 		}
 	}
+	
+	
 	
 	
 }

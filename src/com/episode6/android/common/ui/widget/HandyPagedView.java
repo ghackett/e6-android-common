@@ -210,6 +210,14 @@ public class HandyPagedView extends FrameLayout {
 		invalidate();
 	}
 	
+	public void smoothScrollTo(int x, int duration) {
+		if (!mScroller.isFinished()) {
+			mScroller.abortAnimation();
+		}
+		mScroller.startScroll(mScrollX, 0, x - mScrollX, 0, duration);
+		invalidate();
+	}
+	
 	public void fling(int initVelocity) {
 		if (!mScroller.isFinished()) {
 			mScroller.abortAnimation();
@@ -466,7 +474,7 @@ public class HandyPagedView extends FrameLayout {
 		public void run() {
 			if (mAdapter != null && mAutoScroll) {
 				if ((!mIsBeingDragged) && (!mIsBeingScrolled) && (mCurrentPage < mAdapter.getCount()-1 || mInfiniteLoop)) {
-					smoothScrollTo(getWidth()*2);
+					smoothScrollTo(getWidth()*2, (int)mAutoScrollInterval/2);
 				}
 				getHandler().postDelayed(mAutoScrollRunnable, mAutoScrollInterval);
 				

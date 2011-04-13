@@ -236,8 +236,17 @@ public abstract class TaskExecutorService extends Service {
 				mTask.setTaskSuccesfull(false);
 			}
 			
-			
-			mPostProcessor.execute(new TaskPostProcessorThread(mTask));
+			if (mTask.isBlockerTask()) {
+				try {
+					mTask.postProcess();
+				} catch (Throwable t) {
+					t.printStackTrace();
+					mTask.setTaskSuccesfull(false);
+				}
+				finishTask(mTask);
+			} else {
+				mPostProcessor.execute(new TaskPostProcessorThread(mTask));
+			}
 		}
 		
 		public AbstractTask getTask() {

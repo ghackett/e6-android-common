@@ -34,6 +34,12 @@ public class DelayedTask extends AbstractTask {
 	public AbstractTask getTask() {
 		return mTask;
 	}
+
+	@Override
+	public boolean isBlockerTask() {
+		return mTask.isBlockerTask();
+	}
+	
 	
 	
 

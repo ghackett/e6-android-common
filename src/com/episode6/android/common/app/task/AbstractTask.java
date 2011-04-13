@@ -18,4 +18,11 @@ public abstract class AbstractTask {
 	abstract public void execute() throws Throwable;
 	abstract public void postProcess() throws Throwable;
 	
+	/**
+	 * 
+	 * @return true if this task should do it's postProcessing in the same background thread as the 
+	 * execution method is run (bypassing the postProcessing queue completely)
+	 */
+	abstract public boolean isBlockerTask();
+	
 }

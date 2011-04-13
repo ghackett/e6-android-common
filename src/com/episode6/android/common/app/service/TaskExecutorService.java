@@ -56,6 +56,7 @@ public abstract class TaskExecutorService extends Service {
 
 	@Override
 	public void onCreate() {
+//		Log.e(TAG, "Starting service");
 		mIsRunning = true;
 		if (shouldHoldWakeLock()) {
 			PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
@@ -82,6 +83,7 @@ public abstract class TaskExecutorService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		getHandler().removeCallbacks(mStopSelfRunnable);
 		addTask(getTask(intent));
 		safeStop();
 		return START_NOT_STICKY;
@@ -106,24 +108,32 @@ public abstract class TaskExecutorService extends Service {
 		if (exe == null)
 			exe = getDefaultExecutor();
 		
-		
-		mRequestQueue.add(task);
+		synchronized (mRequestQueue) {
+			mRequestQueue.add(task);
+		}
 		exe.executeTask(task);
 	}
 	
 	
 	public void finishTask(AbstractTask task) {
-		try {
-			mRequestQueue.remove(task);
-		} catch (Exception e) {
-			e.printStackTrace();
+		synchronized (mRequestQueue) {
+			try {
+				mRequestQueue.remove(task);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
+		
 		safeStop();
 	}
 	
 	public void safeStop() {
-		if (mRequestQueue.size() == 0) {
-			stopSelf();
+		synchronized (mRequestQueue) {
+			if (mRequestQueue.size() == 0) {
+				getHandler().postDelayed(mStopSelfRunnable, 500);
+//				Log.e(TAG, "Request Queue is now empty, stopping service");
+//				stopSelf();
+			}
 		}
 	}
 	
@@ -148,6 +158,18 @@ public abstract class TaskExecutorService extends Service {
 		});
 	}
 	
+	private Runnable mStopSelfRunnable = new Runnable() {
+		
+		@Override
+		public void run() {
+			synchronized (mRequestQueue) {
+				if (mRequestQueue.size() == 0) {
+//					Log.e(TAG, "Request Queue is now empty, stopping service");
+					stopSelf();
+				}
+			}
+		}
+	};
 	
 	
 	

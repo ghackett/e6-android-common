@@ -5,13 +5,15 @@ package com.episode6.android.common.ui.widget;
 import java.util.ArrayList;
 
 import android.content.Context;
-import android.graphics.Canvas;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewParent;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
@@ -46,8 +48,9 @@ public class HandyPagedView extends FrameLayout {
 	private int mAutoScrollDuration;
 	private boolean mInfiniteLoop;
 	private boolean mStopAutoScrollingOnTouch;
+	private boolean mPreventInvalidate;
 	
-	private int mScrollX;
+//	private int mScrollX;
 
 	public HandyPagedView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -62,14 +65,14 @@ public class HandyPagedView extends FrameLayout {
 	private void initPagedView() {
 		setWillNotCacheDrawing(true);
 		setWillNotDraw(false);
-		
+		mPreventInvalidate = false;
 		mParentScrollview = null;
 		mContainerViews = new ArrayList<FrameLayout>(3);
 		mVisibleViews = new AdapterViewInfo[3];
 		mRecycledViews = null;
 		mAdapter = null;
 		mCurrentPage = 0;
-		mScrollX = 0;
+//		mScrollX = 0;
 		mIsBeingDragged = false;
 		mIsBeingScrolled = false;
 		mVelocityTracker = null;
@@ -135,7 +138,7 @@ public class HandyPagedView extends FrameLayout {
 	}
 	
 	private void pageChanged() {
-		if (mScrollX == getWidth()) {
+		if (getScrollX() == getWidth()) {
 			//stayed on the same page, no need to continue
 			return;
 		}
@@ -145,7 +148,7 @@ public class HandyPagedView extends FrameLayout {
 		}
 		
 		
-		if (mScrollX == 0) {
+		if (getScrollX() == 0) {
 			//go one back
 			mCurrentPage--;
 			
@@ -158,7 +161,7 @@ public class HandyPagedView extends FrameLayout {
 			mVisibleViews[1] = mVisibleViews[0];
 			mVisibleViews[0] = getAdapterView(mCurrentPage-1);
 			
-		} else if (mScrollX == getWidth()*2) {
+		} else if (getScrollX() == getWidth()*2) {
 			//next page
 			mCurrentPage++;
 			
@@ -232,22 +235,28 @@ public class HandyPagedView extends FrameLayout {
 			return;
 		}
 		
-		mScrollX = scrollX;
-		if (invalidate) {
-//			mIsBeingScrolled = true;
-			invalidate();
+		if (!invalidate) {
+			preventInvalidate();
 		}
+		super.scrollTo(scrollX, 0);
+		allowInvalidate();
+//		mScrollX = scrollX;
+//		
+//		if (invalidate) {
+////			mIsBeingScrolled = true;
+//			invalidate();
+//		}
 	}
 	
 	public void scrollBy(int dx, boolean invalidate) {
-		scrollTo(mScrollX+dx, invalidate);
+		scrollTo(getScrollX()+dx, invalidate);
 	}
 	
 	public void smoothScrollTo(int x) {
 		if (!mScroller.isFinished()) {
 			mScroller.abortAnimation();
 		}
-		mScroller.startScroll(mScrollX, 0, x - mScrollX, 0);
+		mScroller.startScroll(getScrollX(), 0, x - getScrollX(), 0);
 		invalidate();
 	}
 	
@@ -255,7 +264,7 @@ public class HandyPagedView extends FrameLayout {
 		if (!mScroller.isFinished()) {
 			mScroller.abortAnimation();
 		}
-		mScroller.startScroll(mScrollX, 0, x - mScrollX, 0, duration);
+		mScroller.startScroll(getScrollX(), 0, x - getScrollX(), 0, duration);
 		invalidate();
 	}
 	
@@ -263,7 +272,7 @@ public class HandyPagedView extends FrameLayout {
 		if (!mScroller.isFinished()) {
 			mScroller.abortAnimation();
 		}
-		mScroller.fling(mScrollX, 0, initVelocity, 0, -getWidth(), getWidth()*3, 0, 0);
+		mScroller.fling(getScrollX(), 0, initVelocity, 0, -getWidth(), getWidth()*3, 0, 0);
 		invalidate();
 	}
 	
@@ -423,14 +432,14 @@ public class HandyPagedView extends FrameLayout {
 		if (!mIsBeingDragged) {
 			mIsBeingScrolled = false;
 			
-			if (mScrollX % getWidth() == 0) {
+			if (getScrollX() % getWidth() == 0) {
 				pageChanged();
 				return;
 			}
 			
-			if (mScrollX < getWidth()/2) {
+			if (getScrollX() < getWidth()/2) {
 				smoothScrollTo(0);
-			} else if (mScrollX < getWidth()*1.5) {
+			} else if (getScrollX() < getWidth()*1.5) {
 				smoothScrollTo(getWidth());
 			} else {
 				smoothScrollTo(getWidth()*2);
@@ -466,11 +475,11 @@ public class HandyPagedView extends FrameLayout {
 		}
 	}
 
-	@Override
-	protected void onDraw(Canvas canvas) {
-		super.onDraw(canvas);
-		canvas.translate(-mScrollX, 0);
-	}
+//	@Override
+//	protected void onDraw(Canvas canvas) {
+//		super.onDraw(canvas);
+//		canvas.translate(-mScrollX, 0);
+//	}
 	
 	
 	@Override
@@ -549,6 +558,44 @@ public class HandyPagedView extends FrameLayout {
 			this.type = type;
 			this.view = v;
 		}
+	}
+
+	@Override
+	public ViewParent invalidateChildInParent(int[] location, Rect dirty) {
+		// TODO Auto-generated method stub
+		return super.invalidateChildInParent(location, dirty);
+	}
+
+	@Override
+	public void invalidate() {
+		if (!mPreventInvalidate)
+			super.invalidate();
+	}
+
+	@Override
+	public void invalidate(int l, int t, int r, int b) {
+		if (!mPreventInvalidate)
+			super.invalidate(l, t, r, b);
+	}
+
+	@Override
+	public void invalidate(Rect dirty) {
+		if (!mPreventInvalidate)
+			super.invalidate(dirty);
+	}
+
+	@Override
+	public void invalidateDrawable(Drawable drawable) {
+		if (!mPreventInvalidate)
+			super.invalidateDrawable(drawable);
+	}
+	
+	public void preventInvalidate() {
+		mPreventInvalidate = true;
+	}
+	
+	public void allowInvalidate() {
+		mPreventInvalidate = false;
 	}
 	
 	

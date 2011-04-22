@@ -26,6 +26,10 @@ public class HandyPagedView extends FrameLayout {
 	
 //	private static final String TAG = "HandyPagedView";
 	
+	public interface OnPageChangedListener {
+		public void OnPageChanged(HandyPagedView pagedView, int lastPage, int newPage);
+	}
+	
 	private final Handler mHandler = new Handler();
 	
 	private StoppableScrollView mParentScrollview;
@@ -49,6 +53,7 @@ public class HandyPagedView extends FrameLayout {
 	private boolean mInfiniteLoop;
 	private boolean mStopAutoScrollingOnTouch;
 	private boolean mPreventInvalidate;
+	private OnPageChangedListener mPageChangedListener;
 	
 //	private int mScrollX;
 
@@ -80,6 +85,7 @@ public class HandyPagedView extends FrameLayout {
 		mAutoScrollInterval = 400;
 		mInfiniteLoop = false;
 		mStopAutoScrollingOnTouch = false;
+		mPageChangedListener = null;
 		
 		mInnerView = new LinearLayout(getContext());
 		mInnerView.setOrientation(LinearLayout.HORIZONTAL);
@@ -147,6 +153,7 @@ public class HandyPagedView extends FrameLayout {
 			mContainerViews.get(i).removeAllViews();
 		}
 		
+		int lastPage = mCurrentPage;
 		
 		if (getScrollX() == 0) {
 			//go one back
@@ -181,8 +188,16 @@ public class HandyPagedView extends FrameLayout {
 				mContainerViews.get(i).addView(mVisibleViews[i].view);
 		}
 		scrollTo(getWidth(), true);
+		
+		if (mPageChangedListener != null) {
+			mPageChangedListener.OnPageChanged(this, lastPage, mCurrentPage);
+		}
 	}
 	
+	
+	public void setOnPageChangedListener(OnPageChangedListener listener) {
+		mPageChangedListener = listener;
+	}
 	
 	
 	@Override

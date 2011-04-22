@@ -15,7 +15,7 @@ import android.view.ViewConfiguration;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
-import android.widget.Scroller;
+
 
 /*
  * IMPORTANT: if you turn autoscrolling on, remember to turn it off in your activity's onPause
@@ -60,6 +60,9 @@ public class HandyPagedView extends FrameLayout {
 	}
 
 	private void initPagedView() {
+		setWillNotCacheDrawing(true);
+		setWillNotDraw(false);
+		
 		mParentScrollview = null;
 		mContainerViews = new ArrayList<FrameLayout>(3);
 		mVisibleViews = new AdapterViewInfo[3];
@@ -171,7 +174,8 @@ public class HandyPagedView extends FrameLayout {
 		
 		
 		for (int i = 0; i<3; i++) {
-			mContainerViews.get(i).addView(mVisibleViews[i].view);
+			if (mVisibleViews[i] != null)
+				mContainerViews.get(i).addView(mVisibleViews[i].view);
 		}
 		scrollTo(getWidth(), true);
 	}

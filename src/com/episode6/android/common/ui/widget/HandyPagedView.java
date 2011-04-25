@@ -9,14 +9,19 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.ViewParent;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
+import android.widget.TextView;
+
+import com.episode6.android.common.R;
+import com.episode6.android.common.util.PixelUtils;
 
 
 /*
@@ -27,7 +32,7 @@ public class HandyPagedView extends FrameLayout {
 //	private static final String TAG = "HandyPagedView";
 	
 	public interface OnPageChangedListener {
-		public void OnPageChanged(HandyPagedView pagedView, int lastPage, int newPage);
+		public void OnPageChanged(HandyPagedView pagedView, int lastPage, int newPage, int pageCount);
 	}
 	
 	private final Handler mHandler = new Handler();
@@ -54,8 +59,8 @@ public class HandyPagedView extends FrameLayout {
 	private boolean mStopAutoScrollingOnTouch;
 	private boolean mPreventInvalidate;
 	private OnPageChangedListener mPageChangedListener;
+	private LinearLayout mPageIndicatorView;
 	
-//	private int mScrollX;
 
 	public HandyPagedView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -70,6 +75,8 @@ public class HandyPagedView extends FrameLayout {
 	private void initPagedView() {
 		setWillNotCacheDrawing(true);
 		setWillNotDraw(false);
+		
+		mPageIndicatorView = null;
 		mPreventInvalidate = false;
 		mParentScrollview = null;
 		mContainerViews = new ArrayList<FrameLayout>(3);
@@ -77,7 +84,6 @@ public class HandyPagedView extends FrameLayout {
 		mRecycledViews = null;
 		mAdapter = null;
 		mCurrentPage = 0;
-//		mScrollX = 0;
 		mIsBeingDragged = false;
 		mIsBeingScrolled = false;
 		mVelocityTracker = null;
@@ -139,7 +145,8 @@ public class HandyPagedView extends FrameLayout {
 				position++;
 			}
 			scrollTo(pageWidth, true);
-//			Log.e(TAG, "Page Layout updated - w: "+ pageWidth + ", h: " + pageHeight);
+			
+			updatePageIndicator();
 		}
 	}
 	
@@ -190,10 +197,101 @@ public class HandyPagedView extends FrameLayout {
 		scrollTo(getWidth(), true);
 		
 		if (mPageChangedListener != null) {
-			mPageChangedListener.OnPageChanged(this, lastPage, mCurrentPage);
+			mPageChangedListener.OnPageChanged(this, lastPage, mCurrentPage, mAdapter.getCount());
+		}
+		updatePageIndicator();
+	}
+	
+	private void updatePageIndicator() {
+		if (mPageIndicatorView != null && mAdapter != null) {
+			if (!resetPageIndicatorViewIfNecessary()) {
+				if (mAdapter.getCount() > 9) {
+					TextView tv = (TextView)mPageIndicatorView.getChildAt(0);
+					int curPageDisplay = mCurrentPage+1;
+					tv.setText(curPageDisplay + "/" + mAdapter.getCount());
+				} else if (mAdapter.getCount() > 0) {
+					for (int i = 0; i<mAdapter.getCount(); i++) {
+						ImageView iv = (ImageView)mPageIndicatorView.getChildAt(i);
+						iv.setImageResource((i == mCurrentPage ? R.drawable.circle_black : R.drawable.circle_grey));
+					}
+				} else {
+					mPageIndicatorView.removeAllViews();
+				}
+			}
+		} else if (mPageIndicatorView != null) {
+			mPageIndicatorView.removeAllViews();
 		}
 	}
 	
+	/**
+	 * 
+	 * @return true if the pageIndicatorView was reset
+	 */
+	private boolean resetPageIndicatorViewIfNecessary() {
+		if (mPageIndicatorView != null && mAdapter != null) {
+			if (mAdapter.getCount() > 9) {
+				if (mPageIndicatorView.getChildCount() != 1) {
+					buildPageIndicator();
+					return true;
+				}
+				if (!(mPageIndicatorView.getChildAt(0) instanceof TextView)) {
+					buildPageIndicator();
+					return true;
+				}
+			} else if (mAdapter.getCount() > 0) {
+				if (mPageIndicatorView.getChildCount() != mAdapter.getCount()) {
+					buildPageIndicator();
+					return true;
+				}
+				if (!(mPageIndicatorView.getChildAt(0) instanceof ImageView)) {
+					buildPageIndicator();
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	private void buildPageIndicator() {
+		if (mPageIndicatorView != null) {
+			mPageIndicatorView.removeAllViews();
+			if (mAdapter != null) {
+				if (mAdapter.getCount() > 9) {
+					//use a text view
+					TextView tv = new TextView(getContext());
+					int curPageDisplay = mCurrentPage+1;
+					tv.setText(curPageDisplay + "/" + mAdapter.getCount());
+					mPageIndicatorView.addView(tv);
+				} else if (mAdapter.getCount() > 0) {
+					//use dots
+					int padding = PixelUtils.convertToPx(getContext(), 4);
+					int size = PixelUtils.convertToPx(getContext(), 20);
+					for (int i =0; i<mAdapter.getCount(); i++) {
+						ImageView iv = new ImageView(getContext());
+						iv.setImageResource((i == mCurrentPage ? R.drawable.circle_black : R.drawable.circle_grey));
+						iv.setPadding(padding, padding, padding, padding);
+						mPageIndicatorView.addView(iv, new LinearLayout.LayoutParams(size, size));
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * 
+	 * @return a page indicator view that gets updated automatically when the page is changed
+	 * This view is NOT attached to anything by default and it is up to the developer to choose where to 
+	 * put it. The view is made up of gray/black dots if adapter has 9 or fewer items OR a textview if the
+	 * adapter has 10 or more objects
+	 */
+	public LinearLayout getPageIndicatorView() {
+		if (mPageIndicatorView == null) {
+			mPageIndicatorView = new LinearLayout(getContext());
+			mPageIndicatorView.setGravity(Gravity.CENTER);
+			mPageIndicatorView.setOrientation(LinearLayout.HORIZONTAL);
+		}
+		return mPageIndicatorView;
+	}
 	
 	public void setOnPageChangedListener(OnPageChangedListener listener) {
 		mPageChangedListener = listener;
@@ -255,12 +353,6 @@ public class HandyPagedView extends FrameLayout {
 		}
 		super.scrollTo(scrollX, 0);
 		allowInvalidate();
-//		mScrollX = scrollX;
-//		
-//		if (invalidate) {
-////			mIsBeingScrolled = true;
-//			invalidate();
-//		}
 	}
 	
 	public void scrollBy(int dx, boolean invalidate) {
@@ -489,12 +581,6 @@ public class HandyPagedView extends FrameLayout {
 			finishScroll();
 		}
 	}
-
-//	@Override
-//	protected void onDraw(Canvas canvas) {
-//		super.onDraw(canvas);
-//		canvas.translate(-mScrollX, 0);
-//	}
 	
 	
 	@Override
@@ -573,12 +659,6 @@ public class HandyPagedView extends FrameLayout {
 			this.type = type;
 			this.view = v;
 		}
-	}
-
-	@Override
-	public ViewParent invalidateChildInParent(int[] location, Rect dirty) {
-		// TODO Auto-generated method stub
-		return super.invalidateChildInParent(location, dirty);
 	}
 
 	@Override

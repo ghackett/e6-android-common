@@ -138,9 +138,12 @@ public class HandyPagedView extends FrameLayout {
 					position = 0;
 				
 				AdapterViewInfo info = getAdapterView(position);
-				info.view.setLayoutParams(new FrameLayout.LayoutParams(pageWidth, pageHeight));
-				mContainerViews.get(i).addView(info.view);
-				mVisibleViews[i] = info;
+				
+				if (info != null) {
+					info.view.setLayoutParams(new FrameLayout.LayoutParams(pageWidth, pageHeight));
+					mContainerViews.get(i).addView(info.view);
+					mVisibleViews[i] = info;
+				}
 				
 				position++;
 			}
@@ -611,7 +614,7 @@ public class HandyPagedView extends FrameLayout {
 
 	
 	private AdapterViewInfo getAdapterView(int position) {
-		if (mAdapter == null)
+		if (mAdapter == null || mAdapter.getCount() <= 0)
 			return null;
 		if (position < 0) {
 			if (mInfiniteLoop) {

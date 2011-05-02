@@ -125,6 +125,20 @@ public class DataUtils {
 		copyInputStreamToFile(from, to, DEFAULT_BUFFER_SIZE, true, overwrite, null);
 	}
 	
+	public static void appendTextToFile(String text, File to) {
+		try {
+			if (!to.exists()) {
+				to.createNewFile();
+			}
+			
+			ByteArrayInputStream from = new ByteArrayInputStream(text.getBytes());
+			copyInputStreamToOutputStream(from, new BufferedOutputStream(new FileOutputStream(to, true), DEFAULT_BUFFER_SIZE), DEFAULT_BUFFER_SIZE, true, true, null);
+		} catch (Throwable t) {
+			t.printStackTrace();
+			throw new RuntimeException(t);
+		}
+	}
+	
 
 	
 	

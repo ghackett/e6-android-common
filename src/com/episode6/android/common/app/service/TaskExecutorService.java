@@ -32,7 +32,17 @@ public abstract class TaskExecutorService extends Service {
 			if (r instanceof TaskExecutionThread) {
 				AbstractTask task = ((TaskExecutionThread)r).getTask();
 				task.setTaskSuccesfull(false);
-				mPostProcessor.execute(new TaskPostProcessorThread(task));
+				if (task.isBlockerTask()) {
+					try {
+						task.postProcess();
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
+					finishTask(task);
+				} else {
+					mPostProcessor.execute(new TaskPostProcessorThread(task));
+				}
+				
 			} else if (r instanceof TaskPostProcessorThread) {
 				AbstractTask task = ((TaskPostProcessorThread)r).getTask();
 				task.setTaskSuccesfull(false);

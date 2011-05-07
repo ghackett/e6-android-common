@@ -168,6 +168,10 @@ public abstract class TaskExecutorService extends Service {
 		});
 	}
 	
+	public ThreadPoolExecutor getPostProcessor() {
+		return mPostProcessor;
+	}
+	
 	private Runnable mStopSelfRunnable = new Runnable() {
 		
 		@Override

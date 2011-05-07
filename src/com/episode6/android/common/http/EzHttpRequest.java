@@ -117,7 +117,7 @@ public class EzHttpRequest implements DataUtils.ProgressListener {
 		}
 	}
 	
-	public static final int DEFAULT_TIMEOUT_SECS = 30;
+	public static final int DEFAULT_TIMEOUT_SECS = 60;
 	
 	private static final String TMP_FILE_PREFIX = "ez_http_response";
 	
